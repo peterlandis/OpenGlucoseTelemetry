@@ -17,29 +17,131 @@ OGT solves this by providing a unified telemetry layer that enables:
 
 ---
 
-## What OGT Is
+## Short version
 
-OGT is the **runtime and transport layer** for glucose data.
-
-It provides:
-
-- adapters for ingesting data from devices and vendor systems
-- a collector for validation, normalization, and routing
-- a canonical event pipeline for glucose telemetry
-- real-time and historical APIs
-- exporters for downstream systems
-- SDKs and tooling for developers
-
-OGT makes glucose data operational.
+OGT sits between source systems and downstream consumers as the runtime framework that ingests raw glucose data, transforms it into OGIS-compliant events, and delivers it through shared query, streaming, and export paths.
 
 ---
 
-## Relationship to OGIS
+## OGT architecture
 
-OGT works together with the Open Glucose Interoperability Standard (OGIS).
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                    Open Glucose Telemetry (OGT) Runtime                     │
+│------------------------------------------------------------------------------│
+│ OGT is the runtime and transport layer for open glucose data.               │
+│                                                                              │
+│ It provides:                                                                 │
+│ • Adapters                                                                    │
+│ • Collector                                                                   │
+│ • Canonical event routing                                                     │
+│ • Event bus                                                                   │
+│ • Query APIs                                                                  │
+│ • Realtime streaming APIs                                                     │
+│ • Exporters                                                                   │
+│ • Replay / backfill support                                                   │
+│                                                                              │
+│ OGT operationalizes and transports OGIS-compliant events.                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
 
-- **OGIS** defines the data model, semantics, and interoperability contract
-- **OGT** implements the runtime system that ingests, transports, and delivers that data
+---
+
+## Where OGT fits in the ecosystem
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             Consumer Systems                                 │
+│------------------------------------------------------------------------------│
+│ AI apps • mobile apps • dashboards • analytics • EHRs • research systems    │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      ▲
+                                      │ consume normalized data
+                                      │
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                    Open Glucose Telemetry (OGT) Runtime                      │
+│------------------------------------------------------------------------------│
+│ Adapters • Collector • Event Bus • Query APIs • Streaming APIs • Exporters  │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      ▲
+                                      │ validates and carries
+                                      │ OGIS-compliant events
+┌──────────────────────────────────────────────────────────────────────────────┐
+│          Open Glucose Interoperability Standard (OGIS) Specification         │
+│------------------------------------------------------------------------------│
+│ Schemas • semantics • units • timestamps • provenance • mappings              │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      ▲
+                                      │ standardizes data from
+                                      │
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               Source Systems                                 │
+│------------------------------------------------------------------------------│
+│ CGMs • glucose meters • pumps • wearables • vendor clouds • apps              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## How devices use OGT
+
+Devices and vendor systems usually do not talk directly to every downstream app.
+
+Instead, they connect into OGT through an adapter or ingestion path.
+
+### Device flow
+
+```text
+[CGM / Meter / Pump / App / Vendor Cloud]
+                  │
+                  │ raw proprietary data
+                  ▼
+             [OGT Adapter]
+                  │
+                  │ translates to OGIS-compliant event
+                  ▼
+            [OGT Collector]
+                  │
+                  │ validates, normalizes, enriches
+                  ▼
+          [OGT Event Bus / APIs / Exporters]
+```
+
+So devices use OGT as the common runtime integration layer.
+
+That means:
+
+- one vendor integration can serve many apps
+- one normalized pipeline can support many use cases
+- one replayable event path can support real-time and historical consumption
+
+---
+
+## How OGT uses OGIS
+
+OGT depends on OGIS for the meaning of the data.
+
+**OGIS tells OGT:**
+
+- what event types exist
+- what required fields must be present
+- how timestamps work
+- how units must be represented
+- what provenance must be preserved
+- how alerts, readings, and lifecycle events are structured
+
+**OGT then:**
+
+- ingests source payloads
+- maps them into OGIS structures
+- validates them
+- routes them
+- exposes them to downstream systems
+
+So the relationship is:
+
+- **OGIS** defines the standard
+- **OGT** implements the standard in motion
 
 In simple terms:
 
@@ -47,125 +149,120 @@ In simple terms:
 
 ---
 
-## High-Level Architecture
+## Best mental model
 
-```text
-Devices / Vendor APIs / Apps
-        ↓
-     Adapters
-        ↓
-   OGT Collector
-        ↓
- Canonical Event Bus
-        ↓
-+-------------------+-------------------+-------------------+
-| Query APIs        | Realtime APIs     | Exporters         |
-| REST / gRPC       | WebSocket / MQTT  | FHIR / Webhooks   |
-+-------------------+-------------------+-------------------+
-        ↓
-Apps • AI • Analytics • Clinical Systems • Research
-```
+Think of it like this:
+
+- **OGIS** = the language and rules
+- **OGT** = the runtime system, highways, and logistics network
+
+Or more simply:
+
+- **OGIS** says what a glucose event is
+- **OGT** makes glucose events flow
 
 ---
 
-## Core Components
+## The main value of OGT
 
-### Adapters
+OGT creates the working operational layer that turns a paper standard into a usable platform.
 
-Adapters connect to upstream data sources and translate proprietary data into canonical events.
+**Without OGT:**
 
-**Examples:**
+- every app has to build custom ingestion pipelines
+- every vendor integration is siloed
+- replay and normalization are inconsistent
+- streaming and export paths vary wildly
 
-- CGM vendor API adapters
-- BLE device adapters
-- mobile app SDK ingestion
-- webhook ingestion
-- file / CSV import
+**With OGT:**
 
-**Responsibilities:**
+- vendors plug into one telemetry framework
+- apps consume one normalized event model
+- real-time and historical data share one pipeline
+- OGIS becomes practical and enforceable
 
-- authentication with source systems
-- polling or receiving data
-- parsing raw payloads
-- mapping to canonical event format
-- preserving provenance
+---
 
-### Collector
+## Full detailed architecture
 
-The collector is the heart of OGT.
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               Source Systems                                 │
+│------------------------------------------------------------------------------│
+│ CGMs • Glucose Meters • Insulin Pumps • Wearables • Vendor APIs • Mobile    │
+│ Apps • CSV/File Imports • Manual Entry Systems                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      │ raw proprietary payloads
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                OGT Adapters                                  │
+│------------------------------------------------------------------------------│
+│ Cloud API Adapters • BLE Adapters • File Adapters • Webhook Adapters • SDKs │
+│                                                                              │
+│ Responsibilities:                                                             │
+│ • Authenticate with source systems                                            │
+│ • Poll / receive / parse raw payloads                                       │
+│ • Preserve raw source metadata                                                │
+│ • Translate into OGIS-compliant events                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               OGT Collector                                  │
+│------------------------------------------------------------------------------│
+│ Responsibilities:                                                             │
+│ • Validate against OGIS schemas                                               │
+│ • Enforce semantic rules                                                      │
+│ • Normalize units                                                             │
+│ • Normalize timestamps                                                        │
+│ • Deduplicate repeated events                                                 │
+│ • Attach routing and provenance metadata                                      │
+│ • Apply policy and tenant controls                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            OGT Canonical Event Bus                           │
+│------------------------------------------------------------------------------│
+│ Durable internal transport for OGIS-compliant events                         │
+│                                                                              │
+│ Capabilities:                                                                 │
+│ • fan-out                                                                     │
+│ • replay                                                                      │
+│ • partitioning by subject/device                                              │
+│ • durable delivery                                                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+                      │                          │                         │
+                      ▼                          ▼                         ▼
+┌──────────────────────────────┐   ┌──────────────────────────────┐   ┌──────────────────────────────┐
+│         Query APIs           │   │      Realtime Streams        │   │          Exporters           │
+│------------------------------│   │------------------------------│   │------------------------------│
+│ REST / GraphQL / gRPC        │   │ WebSocket / MQTT / gRPC      │   │ FHIR / Webhooks / Warehouse  │
+│ Historical reads             │   │ Live subscription feeds      │   │ Research / App integrations  │
+└──────────────────────────────┘   └──────────────────────────────┘   └──────────────────────────────┘
+                      │                          │                         │
+                      └───────────────┬──────────┴───────────────┬────────┘
+                                      ▼                          ▼
+                         ┌──────────────────────────┐  ┌──────────────────────────┐
+                         │     Consumer Apps        │  │   Clinical / Research    │
+                         │--------------------------│  │--------------------------│
+                         │ AI coaching • dashboards │  │ EHRs • providers • labs  │
+                         │ alerts • analytics       │  │ studies • registries     │
+                         └──────────────────────────┘  └──────────────────────────┘
+```
 
-**Responsibilities:**
+### API and export reference
 
-- schema validation
-- unit normalization
-- timestamp normalization
-- deduplication
-- provenance enrichment
-- routing and policy enforcement
-
-The collector ensures all data entering the system is consistent and interoperable.
-
-### Canonical Event Bus
-
-The event bus distributes normalized events internally.
-
-**Capabilities:**
-
-- fan-out to multiple consumers
-- replay and backfill
-- partitioning by subject or device
-- durable delivery
-
-### Query APIs
-
-Provide historical access to glucose data.
-
-**Examples:**
+**Query APIs (examples):**
 
 - `GET /v1/subjects/{id}/glucose/readings`
 - `GET /v1/subjects/{id}/glucose/latest`
 - `GET /v1/subjects/{id}/alerts`
 
-### Realtime APIs
+**Realtime options:** WebSocket, gRPC streaming, MQTT, webhook subscriptions.
 
-Deliver live glucose data streams.
-
-**Options:**
-
-- WebSocket
-- gRPC streaming
-- MQTT
-- webhook subscriptions
-
-### Exporters
-
-Exporters deliver data to downstream systems.
-
-**Examples:**
-
-- webhook exporter
-- FHIR exporter
-- warehouse exporter
-- analytics pipelines
-- research datasets
-
----
-
-## Event Flow
-
-```text
-Raw Source Data
-    ↓
-OGT Adapter
-    ↓
-OGT Collector
-    ↓
-Canonical Event Bus
-    ↓
-APIs / Streams / Exporters
-    ↓
-Applications and Systems
-```
+**Exporters:** webhook, FHIR, warehouse, analytics pipelines, research datasets.
 
 ---
 
@@ -182,7 +279,7 @@ Applications and Systems
 
 ---
 
-## Example Canonical Event
+## Example canonical event
 
 ```json
 {
@@ -210,24 +307,92 @@ Applications and Systems
 
 ---
 
-## Repository Structure (Planned)
+## Example end-to-end usage
+
+### Scenario
+
+A CGM vendor cloud produces a reading.
+
+### Step 1: Source system emits raw data
+
+```json
+{
+  "sg": 142,
+  "u": "mg/dL",
+  "time": "2026-03-28T15:05:00Z",
+  "trendArrow": 3
+}
+```
+
+### Step 2: OGT adapter receives it
+
+The cloud adapter:
+
+- authenticates to the vendor API
+- fetches the payload
+- preserves raw metadata
+- converts it into an OGIS-compliant event
+
+### Step 3: OGT collector validates it
+
+The collector ensures:
+
+- schema is valid
+- timestamps are correct
+- units are explicit
+- provenance is present
+- event is not duplicated
+
+### Step 4: OGT event bus routes it
+
+The event becomes available to:
+
+- a live WebSocket stream
+- a REST query API
+- a FHIR exporter
+- a webhook sink
+- an analytics pipeline
+
+### Step 5: Downstream consumers use one common interface
+
+Apps do not need to understand that the source was Abbott, Dexcom, Libre, or a file import.
+
+They just consume normalized data.
+
+---
+
+## What OGT actually contains
+
+A clean logical breakdown for the OGT repo is:
 
 ```text
-/collector
-/adapters
-  /cloud
-  /ble
-  /file
-/exporters
-/sdk
-  /typescript
-  /python
-  /swift
-  /kotlin
-/docs
-/examples
-/tests
+OGT
+├── Adapters
+│   ├── cloud
+│   ├── ble
+│   ├── file
+│   ├── webhook
+│   └── mock
+├── Collector
+│   ├── validation
+│   ├── normalization
+│   ├── deduplication
+│   ├── routing
+│   └── provenance
+├── Event Bus
+├── Query Services
+├── Realtime Services
+├── Exporters
+│   ├── fhir
+│   ├── webhook
+│   ├── warehouse
+│   └── app
+├── SDKs
+├── Replay / Backfill
+└── Deployment / examples
 ```
+
+Planned SDK language targets include TypeScript, Python, Swift, and Kotlin.
 
 ---
 
