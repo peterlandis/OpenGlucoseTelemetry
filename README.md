@@ -34,6 +34,16 @@ For **Phase 1 MVP**, this repository implements an in-process **ingestion and no
 
 **Plans and tasks:** [`specifications/README.md`](./specifications/README.md).
 
+### Reference implementation vs native apps (Swift, etc.)
+
+**Node.js and TypeScript in this repository are a portable reference implementation**, not a requirement for every OGT consumer. They exist so the pipeline can run in CI, power golden tests, and provide readable source for `submit()`-style behavior (`collectors/`, `adapters/`).
+
+**OGT as a contract** is language-agnostic: the **JSON Schemas** under [`spec/`](./spec/), the **pinned OGIS** [`glucose.reading`](./spec/pinned/glucose.reading.v0_1.json) schema, **examples** under [`examples/`](./examples/), and **adapter field mappings** (e.g. [`adapters/healthkit/README.md`](./adapters/healthkit/README.md), [`adapters/dexcom/README.md`](./adapters/dexcom/README.md)) define what “OGT-compliant” ingestion means.
+
+**Native mobile apps**—for example **GlucoseAITracker on iPhone**—typically implement the same steps **in Swift on device**: validate the ingestion envelope, route by `source`, map vendor payloads to pre-canonical fields, normalize time and units per policy, apply semantic rules, then validate against the OGIS schema. That gives offline-friendly, low-latency behavior without shipping a Node runtime. Alignment with this repo is proven by **matching fixtures** (same shapes as `examples/ingestion/` → same canonical output as `examples/canonical/`) and, in development, by comparing to `pnpm pipeline` output—not by running Node inside the app.
+
+More detail for the GlucoseAITracker integration: [`specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`](./specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md).
+
 ### Getting Started (MVP)
 
 ```bash
