@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openglucose.org/schemas/ogt/healthkit-payload.v0_1.json",
+  "title": "HealthKit serializable glucose sample (OGT MVP)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "uuid",
+    "value",
+    "unit",
+    "startDate",
+    "endDate",
+    "subject_id"
+  ],
+  "properties": {
+    "uuid": {
+      "type": "string",
+      "minLength": 1,
+      "description": "HKQuantitySample UUID string."
+    },
+    "value": {
+      "type": "number",
+      "description": "Glucose value in `unit`."
+    },
+    "unit": {
+      "type": "string",
+      "enum": ["mg/dL", "mmol/L"]
+    },
+    "startDate": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 / RFC 3339 instant for sample start (maps to observed_at)."
+    },
+    "endDate": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 / RFC 3339 instant for sample end."
+    },
+    "subject_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Subject identifier in the producer namespace (mirrors canonical glucose.reading.subject_id)."
+    },
+    "sourceName": {
+      "type": "string",
+      "description": "HKSource name when known."
+    },
+    "sourceBundleId": {
+      "type": "string",
+      "description": "HKSource bundleIdentifier when known."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "HKMetadata key/value map (string values recommended)."
+    }
+  }
+}

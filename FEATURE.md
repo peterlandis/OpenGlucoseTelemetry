@@ -14,8 +14,9 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 
 ## Phase Legend
 
-- **MVP** — Initial vertical slice: mock path, collector, bus, minimal query/stream/export, local dev
-- **Next** — Broadens adapters, APIs, and exporters after MVP proves the pipeline
+- **MVP (GAT)** — In scope for the **GlucoseAITracker integration** vertical slice: in-process collector, envelope + validation + normalization + OGIS mapping, mock + HealthKit **fixture** adapter, golden tests, minimal `dev/` CLI. See [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md). *Explicitly out of this slice:* durable bus, REST/WebSocket query APIs, webhook exporter, full local compose.
+- **MVP** — Broader OGT product MVP (full README vision: bus, query, stream, exporter, etc.) when tracked separately from the GAT slice
+- **Next** — After the GAT pipeline MVP or after broader MVP
 - **Later** — Replay, advanced policy, extra protocols, enterprise posture
 
 ## Feature Categories
@@ -24,34 +25,35 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| OGIS-001 | Canonical event contract v1 | Define and document the minimum OGIS-aligned event shape (e.g. `glucose.reading`) the runtime accepts, including required timestamps and provenance fields | MVP | 📋 Planned | - | - | Can reference external OGIS specs when published |
-| OGIS-002 | Schema validation artifacts | Ship machine-readable validation (e.g. JSON Schema) for the canonical contract and wire errors into the collector | MVP | 📋 Planned | - | - | Enables consistent reject reasons for adapters |
+| OGIS-001 | Canonical event contract v1 | Define and document the minimum OGIS-aligned event shape (e.g. `glucose.reading`) the runtime accepts, including required timestamps and provenance fields | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Consumes authoritative OGIS v0.1; contract pinned for collector |
+| OGIS-002 | Schema validation artifacts | Ship machine-readable validation (e.g. JSON Schema) for the canonical contract and wire errors into the collector | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Validate mapped output against OGIS JSON Schema |
 
 ### 🧮 Collector
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| COL-001 | Adapter ingestion boundary | Stable internal API (or gRPC/HTTP) for adapters to submit parsed events to the collector with raw-metadata preservation | MVP | 📋 Planned | - | - | Single responsibility: “events enter here” |
-| COL-002 | Validation and semantic gate | Validate incoming events against OGIS-002 schemas and enforce baseline semantic rules before normalization | MVP | 📋 Planned | - | - | Rejects invalid events with structured errors |
-| COL-003 | Unit and timestamp normalization | Normalize glucose units and align observed vs received vs processed time fields per OGIS rules | MVP | 📋 Planned | - | - | One plan: converters + clock skew handling policy |
-| COL-004 | Deduplication | Idempotent handling of duplicate vendor deliveries using a stable key (subject, device, observed time, source fingerprint) | MVP | 📋 Planned | - | - | Keeps bus and storage clean without adapter cooperation |
-| COL-005 | Provenance enrichment | Attach collector metadata (ingest time, adapter id/version, pipeline version) without overwriting source provenance | MVP | 📋 Planned | - | - | Supports traceability in README design principles |
-| COL-006 | Subject routing metadata | Tag events for partitioning and downstream fan-out (subject, device, optional tenant id placeholder) | MVP | 📋 Planned | - | - | Feeds bus partitioning; tenant enforcement comes later |
+| COL-001 | Adapter ingestion boundary | Stable internal API (or gRPC/HTTP) for adapters to submit parsed events to the collector with raw-metadata preservation | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT: ingestion **envelope** + in-process submit API |
+| COL-002 | Validation and semantic gate | Validate incoming events against OGIS-002 schemas and enforce baseline semantic rules before normalization | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Envelope + payload + canonical validation |
+| COL-003 | Unit and timestamp normalization | Normalize glucose units and align observed vs received vs processed time fields per OGIS rules | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Normalization layer §5 |
+| COL-004 | Deduplication | Idempotent handling of duplicate vendor deliveries using a stable key (subject, device, observed time, source fingerprint) | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | In-process dedupe for GAT MVP |
+| COL-005 | Provenance enrichment | Attach collector metadata (ingest time, adapter id/version, pipeline version) without overwriting source provenance | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | `trace_id`, adapter version in envelope |
+| COL-006 | Subject routing metadata | Tag events for partitioning and downstream fan-out (subject, device, optional tenant id placeholder) | Next | 📋 Planned | - | - | GAT MVP: optional minimal tags only; full routing with bus is Next |
 | COL-007 | Policy and tenant controls | Enforce quotas, allow/deny lists, and multi-tenant isolation at ingest | Later | 📋 Planned | - | - | Depends on COL-006 and auth model |
 
 ### 📨 Event bus
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| BUS-001 | Durable event log | Append-only store for normalized events with configurable retention | MVP | 📋 Planned | - | - | Backend-agnostic interface (e.g. pluggable impl for dev vs prod) |
-| BUS-002 | Publish and fan-out | Dispatch committed events to query projection updates, realtime gateways, and exporter workers | MVP | 📋 Planned | - | - | One dispatcher; subscribers register by concern |
+| BUS-001 | Durable event log | Append-only store for normalized events with configurable retention | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP (non-goal: durable bus) |
+| BUS-002 | Publish and fan-out | Dispatch committed events to query projection updates, realtime gateways, and exporter workers | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP |
 | BUS-003 | Partitioning by subject/device | Keys and ordering guarantees sufficient for per-subject replay and concurrent consumers | Next | 📋 Planned | - | - | MVP can be single-partition dev mode first |
 
 ### 🔌 Adapters
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| ADP-001 | Mock adapter and sample stream | Generate realistic canonical or near-canonical events for local demos and tests | MVP | 📋 Planned | - | - | Matches README “sample event stream” |
+| ADP-001 | Mock adapter and sample stream | Generate realistic canonical or near-canonical events for local demos and tests | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Milestone M1; pipeline integration tests |
+| ADP-006 | HealthKit fixture adapter | Map serializable HealthKit sample JSON (envelope `source: healthkit`) to OGIS `glucose.reading` via collector | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | First real source path for GAT MVP §6; Linux-CI friendly |
 | ADP-002 | File / CSV import adapter | Batch ingestion from files with column mapping into canonical events | Next | 📋 Planned | - | - | Good second adapter; no live credentials |
 | ADP-003 | Webhook ingestion adapter | HTTP endpoint that accepts vendor-specific JSON and maps to canonical events via configurable transforms | Next | 📋 Planned | - | - | Pairs with EXP-001 patterns (signatures, retries) |
 | ADP-004 | First cloud vendor adapter | One real vendor API integration using shared auth + polling/receive patterns | Next | 📋 Planned | - | - | Vendor choice tracked separately; keep adapter thin |
@@ -61,22 +63,22 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| QRY-001 | REST query foundation | Versioned HTTP API (`/v1/...`), error model, optional API key or dev auth | MVP | 📋 Planned | - | - | OpenAPI recommended |
-| QRY-002 | Glucose readings and latest | `GET .../glucose/readings` and `.../glucose/latest` backed by bus projections | MVP | 📋 Planned | - | - | Matches README examples |
+| QRY-001 | REST query foundation | Versioned HTTP API (`/v1/...`), error model, optional API key or dev auth | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP |
+| QRY-002 | Glucose readings and latest | `GET .../glucose/readings` and `.../glucose/latest` backed by bus projections | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP |
 | QRY-003 | Alerts endpoint | `GET .../alerts` for normalized alert events | Next | 📋 Planned | - | - | Requires alert event type in canonical model |
 
 ### ⚡ Realtime streaming
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| RT-001 | WebSocket live stream | Subscribe by subject (and optionally device); push normalized events as they commit | MVP | 📋 Planned | - | - | README “Getting Started” WebSocket example |
+| RT-001 | WebSocket live stream | Subscribe by subject (and optionally device); push normalized events as they commit | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP |
 | RT-002 | Additional stream transports | MQTT broker bridge and/or gRPC server streaming mirroring the same event stream | Later | 📋 Planned | - | - | Same semantics as RT-001 |
 
 ### 📤 Exporters
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| EXP-001 | Webhook exporter | Configurable HTTPS delivery with retries, signing, and dead-letter visibility | MVP | 📋 Planned | - | - | First downstream integration path |
+| EXP-001 | Webhook exporter | Configurable HTTPS delivery with retries, signing, and dead-letter visibility | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP |
 | EXP-002 | FHIR exporter | Map canonical glucose readings to FHIR Observation (or Bundle) for clinical consumers | Next | 📋 Planned | - | - | Start with minimal must-have fields |
 | EXP-003 | Warehouse / analytics sink | Batch or streaming export to columnar/object storage for pipelines | Later | 📋 Planned | - | - | Schema contract with data teams |
 
@@ -84,10 +86,11 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| SDK-001 | TypeScript adapter SDK | Types for canonical events, validation helpers, and client for COL-001 ingestion | MVP | 📋 Planned | - | - | README roadmap: adapter SDK (TypeScript) first |
+| SDK-001 | TypeScript adapter SDK | Types for canonical events, validation helpers, and client for COL-001 ingestion | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT MVP may use ad-hoc TS/Python in `dev/` without published SDK |
 | SDK-002 | Additional language SDKs | Python, Swift, or Kotlin clients matching SDK-001 surface | Next | 📋 Planned | - | - | One plan per language is fine |
-| DEV-001 | Local dev environment | One-command bootstrap (e.g. compose) for collector, bus, mock adapter, and sample queries | MVP | 📋 Planned | - | - | README “local collector runtime” |
-| DEV-002 | End-to-end examples | Documented walkthrough: mock → collector → bus → query + WebSocket | MVP | 📋 Planned | - | - | Lives under `/examples` when code exists |
+| DEV-001 | Local dev environment | One-command bootstrap (e.g. compose) for collector, bus, mock adapter, and sample queries | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT MVP: minimal `dev/` harness §9; full compose deferred |
+| DEV-003 | GlucoseAITracker MVP dev harness | CLI or script: load fixture → run pipeline → print canonical JSON (stdout) | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Milestone M3 |
+| DEV-002 | End-to-end examples | Documented walkthrough: mock → collector → bus → query + WebSocket | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP until bus/query exist |
 
 ### ⏪ Replay & advanced delivery
 
@@ -100,16 +103,31 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| PLAT-001 | Health and readiness | `/health` and `/ready` for orchestration | MVP | 📋 Planned | - | - | Minimal ops surface |
-| PLAT-002 | Observability baseline | Structured logs with correlation id from adapter through exporter; basic RED metrics | MVP | 📋 Planned | - | - | README: observable pipeline |
+| PLAT-001 | Health and readiness | `/health` and `/ready` for orchestration | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Out of GAT MVP (no standalone service) |
+| PLAT-002 | Observability baseline | Structured logs with correlation id from adapter through exporter; basic RED metrics | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT MVP: `trace_id` + structured pipeline errors only; full RED metrics Next |
 | PLAT-003 | Multi-tenant deployment profile | Configuration presets for isolated namespaces and limits | Later | 📋 Planned | - | - | Aligns with README future capabilities |
 
 ### 🧪 Quality & testing
 
 | Feature ID | Title | Description | Phase | Status | Assignee | Plan Document | Notes |
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
-| QA-001 | Collector golden tests | Fixture-based tests for validation, normalization, dedup, and provenance | MVP | 📋 Planned | - | - | Locks behavior described in README |
-| QA-002 | Pipeline integration test | Mock adapter → collector → bus → query (and optionally WebSocket) in CI | MVP | 📋 Planned | - | - | Guards the happy path |
+| QA-001 | Collector golden tests | Fixture-based tests for validation, normalization, dedup, and provenance | MVP (GAT) | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | §8 fixtures + expected canonical JSON |
+| QA-002 | Pipeline integration test | Mock adapter → collector → bus → query (and optionally WebSocket) in CI | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT MVP: mock/HealthKit → collector → stdout/result; bus/query path is Next |
+
+---
+
+## GlucoseAITracker integration (MVP)
+
+End-to-end MVP for **GLUCOSE-009**: ingestion envelope, validation, normalization, HealthKit-shaped adapter + fixtures, dev harness. Does not require the full event bus or query APIs. GlucoseAITracker uses a **feature flag** for legacy vs OGT ingestion and a **unified insights engine** on canonical readings; see its GLUCOSE-009 plan.
+
+Rows marked **MVP (GAT)** below match this slice; other phases remain **Next**/**Later** until the broader OGT roadmap is executed.
+
+| Document | Purpose |
+|----------|---------|
+| [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Detailed pipeline plan (repo layout, contract, layers, HealthKit, harness) |
+| [OGT-MVP-IMPLEMENTATION-TASKS.md](specifications/tasks/OGT-MVP-IMPLEMENTATION-TASKS.md) | Checkbox implementation tasks |
+
+**Upstream dependency:** OGIS `glucose.reading` v0.1 JSON Schema and time/unit/provenance docs — see OpenGlucoseInteroperabilityStandard MVP plan.
 
 ---
 
@@ -142,4 +160,4 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 5. Merged: Status = ✅ Complete, Assignee = @username
 ```
 
-**Last Updated:** 2026-03-28
+**Last Updated:** 2026-03-29

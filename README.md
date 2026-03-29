@@ -23,6 +23,31 @@ OGT sits between source systems and downstream consumers as the runtime framewor
 
 ---
 
+## MVP pipeline (GlucoseAITracker / GAT)
+
+For **Phase 1 MVP**, this repository implements an in-process **ingestion and normalization pipeline** in TypeScript: adapters wrap vendor payloads in an **ingestion envelope**, the collector validates and normalizes, and output is **OGIS `glucose.reading` v0.1** validated against a pinned JSON Schema.
+
+- **OGT (this repo)** — ingestion envelope, adapter contracts, validation orchestration, normalization code (`collectors/`, `adapters/`, `spec/`).
+- **OGIS** — canonical event shape and semantics; authoritative schema in the **OpenGlucoseInteroperabilityStandard** (OGIS) repository. OGT pins a copy under [`spec/pinned/`](./spec/pinned/) — see [`spec/pinned/PIN.md`](./spec/pinned/PIN.md).
+
+**Ingestion envelope schema:** [`spec/ingestion-envelope.schema.json`](./spec/ingestion-envelope.schema.json) (field descriptions: [`spec/README.md`](./spec/README.md)).
+
+**Plans and tasks:** [`specifications/README.md`](./specifications/README.md).
+
+### Getting Started (MVP)
+
+```bash
+pnpm install
+pnpm build
+pnpm pipeline examples/ingestion/healthkit-sample.json
+```
+
+Run tests: `pnpm test`. See [`dev/README.md`](./dev/README.md) for exit codes and the `pipeline:dev` script.
+
+**GlucoseAITracker handoff (GLUCOSE-009):** [`specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`](./specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md).
+
+---
+
 ## OGT architecture
 
 ```text
@@ -435,7 +460,7 @@ Initial setup will include:
 
 ## Status
 
-**Draft v0.1** — early architecture and design phase
+**Draft v0.1** — early architecture and design phase. **MVP pipeline slice** (ingestion envelope, HealthKit + mock adapters, normalization, OGIS validation, fixtures, CLI harness) is implemented under `collectors/`, `adapters/`, `spec/`, `examples/`, and `dev/`.
 
 ---
 
@@ -448,3 +473,18 @@ A world where glucose data flows through an open, real-time telemetry system ins
 ## Contributing
 
 Coming soon — contributions, RFC process, and governance model will be defined in future updates.
+
+## License
+
+This project is licensed under the Apache License 2.0.
+
+Apache 2.0 is a permissive open-source license that allows:
+
+- commercial use
+- modification and distribution
+- private and enterprise use
+
+It also provides an explicit patent grant from contributors to users.
+
+This license was chosen to maximize adoption across device manufacturers,
+developers, healthcare systems, and research organizations.
