@@ -1,11 +1,19 @@
 import type { PipelineResult, StructuredPipelineError } from "./errors.js";
 import { failure } from "./errors.js";
-import { formatAjvErrors, validateEnvelope, validateGlucoseReadingOgis, validateHealthkitPayload, validateMockPayload } from "./validators.js";
+import {
+  formatAjvErrors,
+  validateDexcomPayload,
+  validateEnvelope,
+  validateGlucoseReadingOgis,
+  validateHealthkitPayload,
+  validateMockPayload,
+} from "./validators.js";
 import type { CanonicalGlucoseReadingV01 } from "./normalize.js";
 import { normalizeCanonicalReading } from "./normalize.js";
 import { applySemanticRules } from "./semantic.js";
 import { mapHealthKitPayloadToCanonical, type HealthKitGlucosePayload } from "../adapters/healthkit/map.js";
 import { mapMockPayloadToCanonical, type MockGlucosePayload } from "../adapters/mock/map.js";
+import { mapDexcomPayloadToCanonical, type DexcomGlucosePayload } from "../adapters/dexcom/map.js";
 import { DedupeTracker } from "./dedupe.js";
 
 export type IngestionEnvelope = {
@@ -68,6 +76,21 @@ export function submit(
     }
     const mapped: CanonicalGlucoseReadingV01 = mapMockPayloadToCanonical(
       env.payload as unknown as MockGlucosePayload,
+      env,
+    );
+    return finalize(mapped, env, traceId, options);
+  }
+
+  if (env.source === "dexcom") {
+    if (!validateDexcomPayload(env.payload)) {
+      return failure(
+        "PAYLOAD_INVALID",
+        formatAjvErrors(validateDexcomPayload.errors),
+        traceId,
+      );
+    }
+    const mapped: CanonicalGlucoseReadingV01 = mapDexcomPayloadToCanonical(
+      env.payload as unknown as DexcomGlucosePayload,
       env,
     );
     return finalize(mapped, env, traceId, options);

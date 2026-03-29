@@ -7,5 +7,5 @@
     "sourceMap": true
   },
   "include": ["collectors/**/*.ts", "adapters/**/*.ts", "dev/**/*.ts"],
-  "exclude": ["collectors/**/*.test.ts", "node_modules"]
+  "exclude": ["collectors/**/*.test.ts", "adapters/**/*.test.ts", "node_modules"]
 }

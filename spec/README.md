@@ -8,7 +8,7 @@ Adapters submit a single JSON object:
 
 | Field | Type | Purpose |
 |-------|------|--------|
-| `source` | string | Adapter channel id (`healthkit`, `mock`, …). |
+| `source` | string | Adapter channel id (`healthkit`, `mock`, `dexcom`, …). |
 | `payload` | object | Source-specific JSON; validated per `source`. |
 | `received_at` | string (`date-time`) | When OGT received the submission (RFC 3339). |
 | `trace_id` | string | Correlation id for logs and tests. |
@@ -37,6 +37,7 @@ Adapters submit a single JSON object:
 |----------|--------|
 | `healthkit` | [`healthkit-payload.schema.json`](./healthkit-payload.schema.json) |
 | `mock` | [`mock-payload.schema.json`](./mock-payload.schema.json) |
+| `dexcom` | [`dexcom-payload.schema.json`](./dexcom-payload.schema.json) |
 
 ## Pinned OGIS schema
 

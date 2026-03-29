@@ -1,0 +1,21 @@
+{
+  "source": "dexcom",
+  "payload": {
+    "event_id": "2cab70ee-d3b4-5a34-9aa9-767513ab72bd",
+    "subject_id": "dexcom:user:demo",
+    "system_time": "2026-03-29T14:32:00.000Z",
+    "value": 118,
+    "unit": "mg/dL",
+    "trend_arrow": "flat",
+    "trend_rate": 0,
+    "trend_rate_unit": "mg/dL/min",
+    "quality_status": "valid",
+    "device_model": "G7"
+  },
+  "received_at": "2026-03-29T14:33:00.000Z",
+  "trace_id": "dexcom-golden-1",
+  "adapter": {
+    "id": "ogt.adapter.dexcom",
+    "version": "0.1.0"
+  }
+}

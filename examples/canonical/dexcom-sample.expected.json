@@ -1,0 +1,29 @@
+{
+  "event_type": "glucose.reading",
+  "event_version": "0.1",
+  "subject_id": "dexcom:user:demo",
+  "observed_at": "2026-03-29T14:32:00.000Z",
+  "received_at": "2026-03-29T14:33:00.000Z",
+  "value": 118,
+  "unit": "mg/dL",
+  "measurement_source": "cgm",
+  "device": {
+    "type": "cgm",
+    "manufacturer": "Dexcom",
+    "model": "G7"
+  },
+  "provenance": {
+    "source_system": "dexcom",
+    "raw_event_id": "2cab70ee-d3b4-5a34-9aa9-767513ab72bd",
+    "adapter_version": "0.1.0",
+    "ingested_at": "2026-03-29T14:33:00.000Z"
+  },
+  "trend": {
+    "direction": "stable",
+    "rate": 0,
+    "rate_unit": "mg/dL/min"
+  },
+  "quality": {
+    "status": "valid"
+  }
+}

@@ -32,11 +32,13 @@ addFormats(ajv);
 const envelopeSchema: object = loadJsonSchema(specPaths.ingestionEnvelopeSchema);
 const healthkitPayloadSchema: object = loadJsonSchema(specPaths.healthkitPayloadSchema);
 const mockPayloadSchema: object = loadJsonSchema(specPaths.mockPayloadSchema);
+const dexcomPayloadSchema: object = loadJsonSchema(specPaths.dexcomPayloadSchema);
 const glucoseReadingSchema: object = loadJsonSchema(specPaths.glucoseReadingOgisSchema);
 
 export const validateEnvelope: ValidateFunction = ajv.compile(envelopeSchema);
 export const validateHealthkitPayload: ValidateFunction = ajv.compile(healthkitPayloadSchema);
 export const validateMockPayload: ValidateFunction = ajv.compile(mockPayloadSchema);
+export const validateDexcomPayload: ValidateFunction = ajv.compile(dexcomPayloadSchema);
 export const validateGlucoseReadingOgis: ValidateFunction = ajv.compile(glucoseReadingSchema);
 
 export function formatAjvErrors(errors: ErrorObject[] | null | undefined): string {

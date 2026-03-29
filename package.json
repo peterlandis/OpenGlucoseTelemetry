@@ -10,7 +10,7 @@
     "pipeline": "node dist/dev/run-pipeline.js",
     "pipeline:dev": "tsx dev/run-pipeline.ts",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm build && pnpm test && pnpm pipeline examples/ingestion/healthkit-sample.json"
+    "verify": "pnpm build && pnpm test && pnpm pipeline examples/ingestion/healthkit-sample.json && pnpm pipeline examples/ingestion/dexcom-sample.json"
   },
   "engines": {
     "node": ">=20"

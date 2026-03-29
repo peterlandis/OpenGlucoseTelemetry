@@ -18,6 +18,7 @@ The CLI runs compiled JavaScript under `dist/`. After changing TypeScript source
 
 ```bash
 pnpm pipeline examples/ingestion/healthkit-sample.json
+pnpm pipeline examples/ingestion/dexcom-sample.json
 ```
 
 Prints canonical `glucose.reading` JSON to stdout.

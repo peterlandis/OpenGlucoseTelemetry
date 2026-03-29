@@ -25,6 +25,17 @@ describe("submit pipeline", () => {
     expect(result.value).toEqual(expected);
   });
 
+  it("passes dexcom golden fixture", () => {
+    const envelope: unknown = readExample("examples/ingestion/dexcom-sample.json");
+    const expected: unknown = readExample("examples/canonical/dexcom-sample.expected.json");
+    const result = submit(envelope);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.value).toEqual(expected);
+  });
+
   it("passes mock adapter envelope", () => {
     const envelope = {
       source: "mock",
@@ -50,7 +61,7 @@ describe("submit pipeline", () => {
 
   it("rejects unknown adapter source with stable code", () => {
     const envelope = {
-      source: "dexcom-cloud",
+      source: "vendor-unknown",
       payload: {},
       received_at: "2026-03-29T10:00:00.000Z",
       trace_id: "t1",

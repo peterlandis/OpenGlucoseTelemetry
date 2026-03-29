@@ -40,6 +40,7 @@ For **Phase 1 MVP**, this repository implements an in-process **ingestion and no
 pnpm install
 pnpm build
 pnpm pipeline examples/ingestion/healthkit-sample.json
+pnpm pipeline examples/ingestion/dexcom-sample.json
 ```
 
 Run tests: `pnpm test`. See [`dev/README.md`](./dev/README.md) for exit codes and the `pipeline:dev` script.
@@ -488,3 +489,15 @@ It also provides an explicit patent grant from contributors to users.
 
 This license was chosen to maximize adoption across device manufacturers,
 developers, healthcare systems, and research organizations.
+
+## Status
+
+This project is in early development (v0.1) and is being designed in the open.
+
+We are actively seeking feedback and collaboration from:
+
+- device manufacturers
+- developers
+- healthcare organizations
+- researchers
+- open-source contributors

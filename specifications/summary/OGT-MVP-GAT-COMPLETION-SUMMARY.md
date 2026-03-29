@@ -10,7 +10,7 @@
 
 ## Executive summary
 
-The Open Glucose Telemetry repository now includes a **portable TypeScript MVP pipeline** that accepts **ingestion envelopes** from adapters, validates envelope and per-source payloads, maps **HealthKit-shaped JSON** and **mock** payloads to a pre-canonical reading, **normalizes** timestamps (UTC, millisecond precision) and glucose **to mg/dL** per GAT policy, applies **semantic gates** (plausible mg/dL range, future `observed_at` skew), optionally **dedupes** in memory, and validates the result against a **pinned OGIS** `glucose.reading` v0.1 JSON Schema. **Golden and negative fixtures**, a **`dev/` CLI**, **`pnpm verify`** (build + tests + smoke), and **GitHub Actions** provide reproducible behavior without an iPhone. **Non-goals** for this slice remain unchanged: durable bus, REST/WebSocket APIs, webhook exporter, full compose stack.
+The Open Glucose Telemetry repository now includes a **portable TypeScript MVP pipeline** that accepts **ingestion envelopes** from adapters, validates envelope and per-source payloads, maps **HealthKit-shaped**, **Dexcom EGV-style**, and **mock** JSON payloads to a pre-canonical reading, **normalizes** timestamps (UTC, millisecond precision) and glucose **to mg/dL** per GAT policy, applies **semantic gates** (plausible mg/dL range, future `observed_at` skew), optionally **dedupes** in memory, and validates the result against a **pinned OGIS** `glucose.reading` v0.1 JSON Schema. **Golden and negative fixtures**, a **`dev/` CLI**, **`pnpm verify`** (build + tests + smoke), and **GitHub Actions** provide reproducible behavior without an iPhone. **Non-goals** for this slice remain unchanged: durable bus, REST/WebSocket APIs, webhook exporter, full compose stack.
 
 ---
 
@@ -21,14 +21,15 @@ The Open Glucose Telemetry repository now includes a **portable TypeScript MVP p
 | Path | Purpose |
 |------|---------|
 | `collectors/` | `submit()` pipeline, normalization, semantic rules, Ajv validators, optional `DedupeTracker`, Vitest tests |
-| `adapters/healthkit/`, `adapters/mock/` | Source mappers + HealthKit field mapping doc |
+| `adapters/healthkit/`, `adapters/dexcom/`, `adapters/mock/` | Source mappers + field mapping docs |
 | `spec/ingestion-envelope.schema.json` | Normative ingestion envelope (Draft 2020-12) |
 | `spec/healthkit-payload.schema.json` | Serializable HK glucose sample shape |
+| `spec/dexcom-payload.schema.json` | Serializable Dexcom EGV-style payload |
 | `spec/mock-payload.schema.json` | Mock adapter payload |
 | `spec/pinned/glucose.reading.v0_1.json` | Pinned OGIS canonical schema (checksum in `spec/pinned/PIN.md`) |
 | `spec/README.md` | Envelope and payload documentation |
 | `examples/ingestion/` | Positive + negative envelopes |
-| `examples/canonical/healthkit-sample.expected.json` | Golden expected `glucose.reading` output |
+| `examples/canonical/*-sample.expected.json` | Golden expected `glucose.reading` outputs (HealthKit, Dexcom, …) |
 | `dev/run-pipeline.ts` | CLI: JSON file → stdout canonical or stderr structured error |
 | `specifications/handoff/` | GLUCOSE-009 consumption + version compatibility |
 
@@ -37,7 +38,7 @@ The Open Glucose Telemetry repository now includes a **portable TypeScript MVP p
 ```text
 IngestionEnvelope
   → validate envelope (JSON Schema)
-  → route by source (healthkit | mock)
+  → route by source (healthkit | dexcom | mock)
   → validate payload (per-source schema)
   → map to pre-canonical glucose.reading fields
   → normalize (time, unit → mg/dL, string bounds, strip nulls)
@@ -71,7 +72,7 @@ Structured errors: `{ code, message, field?, trace_id }` with stable `code` valu
 |-------------------|-------------------------|
 | OGIS-001, OGIS-002 | Pinned schema + Ajv validation after map/normalize |
 | COL-001 — COL-005 | Envelope, gates, normalization, optional dedupe, provenance/trace |
-| ADP-001, ADP-006 | Mock + HealthKit fixture mappers |
+| ADP-001, ADP-006, ADP-007 | Mock + HealthKit + Dexcom fixture mappers |
 | DEV-003 | `dev/run-pipeline.ts` + `dev/README.md` |
 | QA-001 | Golden + negative tests + CI smoke |
 
@@ -99,3 +100,4 @@ Explicitly **not** in this summary (still **Next** / **Later** in [FEATURES.md](
 | Date | Change |
 |------|--------|
 | 2026-03-29 | Initial GAT MVP completion summary |
+| 2026-03-29 | Dexcom fixture adapter (`source: dexcom`), schema, golden example |

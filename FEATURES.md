@@ -56,6 +56,7 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 |------------|-------|-------------|-------|--------|----------|---------------|-------|
 | ADP-001 | Mock adapter and sample stream | Generate realistic canonical or near-canonical events for local demos and tests | MVP (GAT) | ✅ Complete | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | `source: mock`, `adapters/mock/map.ts`, integration tests |
 | ADP-006 | HealthKit fixture adapter | Map serializable HealthKit sample JSON (envelope `source: healthkit`) to OGIS `glucose.reading` via collector | MVP (GAT) | ✅ Complete | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | `adapters/healthkit/map.ts` + `spec/healthkit-payload.schema.json` |
+| ADP-007 | Dexcom fixture adapter | Map serializable Dexcom EGV-style JSON (`source: dexcom`) to OGIS `glucose.reading` (trend/quality best-effort); no live cloud client | MVP (GAT) | ✅ Complete | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | `adapters/dexcom/map.ts` + `spec/dexcom-payload.schema.json`; **ADP-004** remains live cloud API |
 | ADP-002 | File / CSV import adapter | Batch ingestion from files with column mapping into canonical events | Next | 📋 Planned | - | - | Good second adapter; no live credentials |
 | ADP-003 | Webhook ingestion adapter | HTTP endpoint that accepts vendor-specific JSON and maps to canonical events via configurable transforms | Next | 📋 Planned | - | - | Pairs with EXP-001 patterns (signatures, retries) |
 | ADP-004 | First cloud vendor adapter | One real vendor API integration using shared auth + polling/receive patterns | Next | 📋 Planned | - | - | Vendor choice tracked separately; keep adapter thin |
@@ -163,4 +164,4 @@ Rows marked **MVP (GAT)** above match this slice; other phases remain **Next**/*
 5. Merged: Status = ✅ Complete, Assignee = @username
 ```
 
-**Last updated:** 2026-03-29 (GAT MVP pipeline delivered; see completion summary)
+**Last updated:** 2026-03-29 (Dexcom fixture adapter `source: dexcom`; see completion summary)

@@ -30,6 +30,9 @@ export const specPaths = {
   get mockPayloadSchema(): string {
     return join(this.repoRoot, "spec/mock-payload.schema.json");
   },
+  get dexcomPayloadSchema(): string {
+    return join(this.repoRoot, "spec/dexcom-payload.schema.json");
+  },
   get glucoseReadingOgisSchema(): string {
     return join(this.repoRoot, "spec/pinned/glucose.reading.v0_1.json");
   },
