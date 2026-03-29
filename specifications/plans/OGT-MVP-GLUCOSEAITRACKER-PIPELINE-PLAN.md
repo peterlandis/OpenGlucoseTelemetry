@@ -212,9 +212,9 @@ The app integrates OGT without a big-bang cutover:
 
 ---
 
-## Traceability to FEATURE.md
+## Traceability to FEATURES.md
 
-`FEATURE.md` uses phase **MVP (GAT)** for this plan. In-scope feature IDs include:
+`FEATURES.md` (and redirect stub `FEATURE.md`) uses phase **MVP (GAT)** for this plan. In-scope feature IDs include:
 
 - **OGIS-001, OGIS-002** — canonical contract consumption and validation wiring  
 - **COL-001–COL-005** — ingestion envelope through provenance (in-process)  
@@ -233,3 +233,4 @@ The app integrates OGT without a big-bang cutover:
 | 2026-03-29 | Initial MVP pipeline plan for GlucoseAITracker integration |
 | 2026-03-29 | GlucoseAITracker: feature flag + unified insights engine (see GLUCOSE-009 app plan) |
 | 2026-03-29 | `FEATURE.md`: phase **MVP (GAT)** aligned; Traceability lists feature IDs |
+| 2026-03-29 | `FEATURES.md` + completion summary in `specifications/summary/`; GAT rows marked complete |
