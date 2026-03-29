@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 20+ locally; GitHub Actions CI uses **Node.js 24** (see `.github/workflows/ogt-mvp-ci.yml`).
 - [pnpm](https://pnpm.io/) (Corepack: `corepack enable`)
 
 Install dependencies from the repository root:
