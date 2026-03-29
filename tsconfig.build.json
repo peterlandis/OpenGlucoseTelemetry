@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
+    "sourceMap": true
+  },
+  "include": ["collectors/**/*.ts", "adapters/**/*.ts", "dev/**/*.ts"],
+  "exclude": ["collectors/**/*.test.ts", "adapters/**/*.test.ts", "node_modules"]
+}

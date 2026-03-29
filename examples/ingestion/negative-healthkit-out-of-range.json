@@ -1,0 +1,17 @@
+{
+  "source": "healthkit",
+  "payload": {
+    "uuid": "00000000-0000-0000-0000-000000000003",
+    "value": 900,
+    "unit": "mg/dL",
+    "startDate": "2026-03-29T12:00:00.000Z",
+    "endDate": "2026-03-29T12:00:00.000Z",
+    "subject_id": "local:test:oor"
+  },
+  "received_at": "2026-03-29T12:01:00.000Z",
+  "trace_id": "negative-oor",
+  "adapter": {
+    "id": "ogt.adapter.healthkit",
+    "version": "0.1.0"
+  }
+}

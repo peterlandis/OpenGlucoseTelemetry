@@ -1,0 +1,19 @@
+{
+  "source": "healthkit",
+  "payload": {
+    "uuid": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+    "value": 142,
+    "unit": "mg/dL",
+    "startDate": "2026-03-29T14:32:00.000Z",
+    "endDate": "2026-03-29T14:32:00.000Z",
+    "subject_id": "local:iphone:demo-subject",
+    "sourceName": "Dexcom G7",
+    "sourceBundleId": "com.dexcom.G7"
+  },
+  "received_at": "2026-03-29T14:33:15.000Z",
+  "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "adapter": {
+    "id": "ogt.adapter.healthkit",
+    "version": "0.1.0"
+  }
+}

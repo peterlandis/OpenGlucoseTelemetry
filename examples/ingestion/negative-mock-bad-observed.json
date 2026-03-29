@@ -1,0 +1,15 @@
+{
+  "source": "mock",
+  "payload": {
+    "subject_id": "local:test:bad-time",
+    "value": 100,
+    "unit": "mg/dL",
+    "observed_at": "not-a-valid-date-time"
+  },
+  "received_at": "2026-03-29T12:01:00.000Z",
+  "trace_id": "negative-bad-observed",
+  "adapter": {
+    "id": "ogt.adapter.mock",
+    "version": "0.1.0"
+  }
+}

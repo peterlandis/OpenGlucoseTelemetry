@@ -1,0 +1,9 @@
+# Specifications index
+
+| Path | Description |
+|------|-------------|
+| [plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | MVP telemetry / pipeline plan (GlucoseAITracker integration). |
+| [summary/OGT-MVP-GAT-COMPLETION-SUMMARY.md](summary/OGT-MVP-GAT-COMPLETION-SUMMARY.md) | What shipped for the GAT MVP slice (inventory + traceability). |
+| [tasks/OGT-MVP-IMPLEMENTATION-TASKS.md](tasks/OGT-MVP-IMPLEMENTATION-TASKS.md) | Checklist for MVP implementation tasks. |
+| [handoff/OGT-GLUCOSE-009-CONSUMPTION.md](handoff/OGT-GLUCOSE-009-CONSUMPTION.md) | How GlucoseAITracker consumes OGT (GLUCOSE-009). |
+| [handoff/VERSION-COMPATIBILITY.md](handoff/VERSION-COMPATIBILITY.md) | OGT ↔ OGIS ↔ app version matrix. |

@@ -1,0 +1,29 @@
+name: OGT MVP CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    # Opt composite actions still on Node 20 (e.g. pnpm/action-setup@v4) into the Node 24 runtime;
+    # remove when those actions ship Node 24 builds. See:
+    # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v6
+      # pnpm version from package.json "packageManager" (Corepack-compatible pin).
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install, build, test, smoke pipeline
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm verify
