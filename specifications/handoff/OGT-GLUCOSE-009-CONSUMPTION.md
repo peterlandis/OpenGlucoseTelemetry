@@ -1,5 +1,7 @@
 # GlucoseAITracker (GLUCOSE-009) — consuming OGT
 
+**Parity & drift:** Rule-by-rule TS vs Swift alignment lives in **[OGT-SWIFT-PARITY-MATRIX.md](./OGT-SWIFT-PARITY-MATRIX.md)**. Canonical golden workflow: [`examples/canonical/README.md`](../../examples/canonical/README.md).
+
 ## Decision (G-01)
 
 - **Reference implementation:** TypeScript in this repository (`collectors/pipeline.ts`, `submit()`), validated by golden JSON fixtures and CI.
@@ -32,3 +34,19 @@ With the flag **on**, for HealthKit-shaped samples:
 2. Run through the in-app pipeline and compare the resulting `glucose.reading` document to `pnpm pipeline <envelope.json>` output from this repo (semantic JSON equality).
 
 Record any intentional product differences in adapter notes.
+
+## Consumer pattern — native row vs canonical (G-05)
+
+**Summary:** Persist the **native** row (**`Glucose`**, Core Data) as today. For OGT/OGIS alignment, **derive** **`GlucoseReadingCanonical`** (OGIS `glucose.reading` v0.1) via **`GlucoseReadingCanonicalMapper`**, then run **`OGTGlucoseIngestPipeline.validate`** (semantic / schema-ish gate) before relying on that reading for ingest filtering or insights. This is **not** a second persisted table in the current GAT design—canonical is an **interoperability projection** of the native row.
+
+Full narrative, diagrams, and extension points:
+
+- `../GlucoseAITracker/Documentation/OGT-OGIS-TWO-STAGE-ADAPTATION.md` (sibling checkout)
+
+This OGT repository defines the **TypeScript** reference pipeline; the Swift path is a **documented subset** (see matrix). Supporting artifacts:
+
+- Plan: [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md)
+- Tasks: [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md](../tasks/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md)
+- Parity matrix: [OGT-SWIFT-PARITY-MATRIX.md](./OGT-SWIFT-PARITY-MATRIX.md)
+
+**OGIS** informative guidance (**`source_system` registry**, time wire notes) ships under [OpenGlucoseInteroperabilityStandard](https://github.com/peterlandis/OpenGlucoseInteroperabilityStandard): [OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md](../../../OpenGlucoseInteroperabilityStandard/specifications/plans/OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md) when repos are siblings.

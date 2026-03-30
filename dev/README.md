@@ -36,3 +36,13 @@ Prints canonical `glucose.reading` JSON to stdout.
 ```bash
 pnpm test
 ```
+
+## Cross-runtime JSON parity
+
+Compare two canonical JSON files with stable key ordering (e.g. TS `pnpm pipeline` output vs Swift export):
+
+```bash
+pnpm parity:check path/to/a.json path/to/b.json
+```
+
+See [`examples/canonical/README.md`](../examples/canonical/README.md).
