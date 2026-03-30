@@ -1,9 +1,34 @@
 {
-  "name": "@openglucose/telemetry-mvp",
+  "name": "@openglucose/telemetry-runtime",
   "version": "0.1.0",
-  "private": true,
+  "description": "Open Glucose Telemetry (OGT) reference ingestion pipeline: envelope validation, adapters, normalization, and OGIS-shaped canonical glucose readings (Node.js / TypeScript).",
   "type": "module",
+  "license": "Apache-2.0",
+  "author": "Open Glucose Telemetry contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peterlandis/OpenGlucoseTelemetry.git",
+    "directory": "runtimes/typescript"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/collectors/pipeline.d.ts",
+      "import": "./dist/collectors/pipeline.js",
+      "default": "./dist/collectors/pipeline.js"
+    }
+  },
+  "types": "./dist/collectors/pipeline.d.ts",
+  "files": [
+    "dist",
+    "bundled",
+    "README.md"
+  ],
   "scripts": {
+    "sync-schemas": "node scripts/sync-schemas.mjs",
+    "prebuild": "node scripts/sync-schemas.mjs",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -11,10 +36,15 @@
     "pipeline:dev": "tsx dev/run-pipeline.ts",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm build && pnpm test && node dist/dev/run-pipeline.js ../../examples/ingestion/healthkit-sample.json && node dist/dev/run-pipeline.js ../../examples/ingestion/dexcom-sample.json",
-    "parity:check": "node dev/parity-check.mjs"
+    "parity:check": "node dev/parity-check.mjs",
+    "prepublishOnly": "pnpm run build"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
@@ -22,8 +52,13 @@
     "typescript": "^5.8.2",
     "vitest": "^3.0.9"
   },
-  "dependencies": {
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
-  }
+  "keywords": [
+    "glucose",
+    "telemetry",
+    "diabetes",
+    "cgm",
+    "healthkit",
+    "json-schema",
+    "ogt"
+  ]
 }

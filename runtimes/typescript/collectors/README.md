@@ -70,7 +70,7 @@ flowchart TB
 
 | Situation | Use this |
 |-----------|-----------|
-| **Default — golden envelopes, built-in sources** | **`import { submit } from "./collectors/pipeline.js"`** (or the package export your app wires up). Implementation: **`submit()`** in [`core/collector-engine.ts`](./core/collector-engine.ts). |
+| **Default — golden envelopes, built-in sources** | **`import { submit } from "@openglucose/telemetry-runtime"`** when installed from npm, or **`import { submit } from "./collectors/pipeline.js"`** in this repo. Implementation: **`submit()`** in [`core/collector-engine.ts`](./core/collector-engine.ts). |
 | **Dedupe** | **`SubmitOptions`** with **`dedupe: new DedupeTracker()`** (re-exported from [`pipeline.ts`](./pipeline.ts)). |
 | **New `source` ids** | Add Ajv validators in [`validation/schema-validators.ts`](./validation/schema-validators.ts), add **`map*.ts`** under [`../adapters/`](../adapters/), and register **`builtinIngestPlugins[source]`** in [`registry/ingest-plugins.ts`](./registry/ingest-plugins.ts). **Do not** add `if (source === …)` chains to the engine. |
 | **Type-only imports** | **`IngestionEnvelope`**, **`CanonicalGlucoseReadingV01`**, **`PipelineResult`**, **`PipelineIssueCode`** from [`pipeline.ts`](./pipeline.ts). |
