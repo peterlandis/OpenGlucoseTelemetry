@@ -74,6 +74,8 @@ For **Phase 1 MVP**, the **TypeScript runtime** under [`runtimes/typescript/`](.
 
 **Plans and tasks:** [`specifications/README.md`](./specifications/README.md).
 
+**Completion summaries:** [`specifications/summary/OGT-COMPLETION-SUMMARY.md`](./specifications/summary/OGT-COMPLETION-SUMMARY.md) (program rollup) · [OGT-MVP-GAT-COMPLETION-SUMMARY.md](./specifications/summary/OGT-MVP-GAT-COMPLETION-SUMMARY.md) (GAT slice) · [OGT-CROSS-RUNTIME-PARITY-COMPLETION-SUMMARY.md](./specifications/summary/OGT-CROSS-RUNTIME-PARITY-COMPLETION-SUMMARY.md) (parity / consumer docs).
+
 ### Reference implementation vs native apps (Swift, etc.)
 
 **Node.js and TypeScript under [`runtimes/typescript/`](./runtimes/typescript/) are a portable reference implementation**, not a requirement for every OGT consumer. They exist so the pipeline can run in CI, power golden tests, and provide readable source for `submit()`-style behavior.
