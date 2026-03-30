@@ -117,6 +117,14 @@ Feature backlog for OGT, aligned with [README.md](./README.md). Each row is size
 | QA-001 | Collector golden tests | Fixture-based tests for validation, normalization, dedup, and provenance | MVP (GAT) | ✅ Complete | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Vitest golden + negative fixtures; `pnpm verify` smoke |
 | QA-002 | Pipeline integration test | Mock adapter → collector → bus → query (and optionally WebSocket) in CI | Next | 📋 Planned | - | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | GAT MVP: mock/HealthKit → collector → result; bus/query path is Next |
 
+### 🔗 GlucoseAITracker cross-runtime parity & consumer docs (wave 2)
+
+| Feature ID | Title | Description | Phase | Status | Assignee | Plan document | Notes |
+|------------|-------|-------------|-------|--------|----------|---------------|-------|
+| PAR-001 | TS ↔ Swift parity matrix | Document rule-by-rule alignment between `collectors/semantic.ts` / `normalize.ts` and GlucoseAITracker `OGTGlucoseIngestPipeline` + mapper; call out intentional drift | Next | ✅ Complete | - | [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](specifications/plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md) | Delivered: `specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md` |
+| PAR-002 | Shared golden canonical fixtures | Process (and optional artifacts) so `glucose.reading` JSON from TS `pnpm pipeline` can be compared to Swift-exported or hand-synced JSON | Next | ✅ Complete | - | [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](specifications/plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md) | `examples/canonical/README.md`, `manual-sample.swift-export.json`, `pnpm parity:check` |
+| DOC-005 | Consumer pattern documentation | Extend handoff/README: persist native row → derive OGIS → semantic gate; link GlucoseAITracker `OGT-OGIS-TWO-STAGE-ADAPTATION.md` | Next | ✅ Complete | - | [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](specifications/plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md) | `OGT-GLUCOSE-009-CONSUMPTION.md`, root `README.md`, `collectors/README.md` |
+
 ---
 
 ## GlucoseAITracker integration (MVP)
@@ -130,8 +138,10 @@ Rows marked **MVP (GAT)** above match this slice; other phases remain **Next**/*
 | [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](specifications/plans/OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md) | Detailed pipeline plan (repo layout, contract, layers, HealthKit, harness) |
 | [OGT-MVP-IMPLEMENTATION-TASKS.md](specifications/tasks/OGT-MVP-IMPLEMENTATION-TASKS.md) | Checkbox implementation tasks (all complete for GAT scope) |
 | [OGT-MVP-GAT-COMPLETION-SUMMARY.md](specifications/summary/OGT-MVP-GAT-COMPLETION-SUMMARY.md) | What shipped for this slice and where it lives in the repo |
+| [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](specifications/plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md) | Wave 2: TS ↔ Swift parity matrix, golden fixture process, consumer docs |
+| [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md](specifications/tasks/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md) | Checkbox tasks for wave 2 |
 
-**Upstream dependency:** OGIS `glucose.reading` v0.1 JSON Schema and time/unit/provenance docs — see OpenGlucoseInteroperabilityStandard MVP plan.
+**Upstream dependency:** OGIS `glucose.reading` v0.1 JSON Schema and time/unit/provenance docs — see OpenGlucoseInteroperabilityStandard MVP plan. **Wave 2 alignment:** [OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md](../OpenGlucoseInteroperabilityStandard/specifications/plans/OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md) when repos are siblings (same parent folder).
 
 ---
 
@@ -164,4 +174,4 @@ Rows marked **MVP (GAT)** above match this slice; other phases remain **Next**/*
 5. Merged: Status = ✅ Complete, Assignee = @username
 ```
 
-**Last updated:** 2026-03-29 (Dexcom fixture adapter `source: dexcom`; see completion summary)
+**Last updated:** 2026-03-30 (PAR-001/002, DOC-005 — cross-runtime parity & consumer docs wave 2)

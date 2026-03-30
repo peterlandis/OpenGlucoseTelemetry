@@ -95,4 +95,12 @@ Companion to [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](../plans/OGT-MVP-GLUCOS
 
 ---
 
+## Related — wave 2 (cross-runtime parity & consumer docs)
+
+- Plan: [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md)
+- Tasks: [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md](./OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-TASKS.md)
+- OGIS companion: [OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md](../../../OpenGlucoseInteroperabilityStandard/specifications/plans/OGIS-IMPLEMENTER-INTEROP-GUIDANCE-PLAN.md) (sibling repo)
+
+---
+
 **Last updated:** 2026-03-29 — MVP pipeline implemented in-repo; all tracks marked complete for GAT scope.
