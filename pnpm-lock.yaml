@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  runtimes/typescript:
     dependencies:
       ajv:
         specifier: ^8.17.1

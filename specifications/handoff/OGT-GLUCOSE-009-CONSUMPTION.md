@@ -4,7 +4,7 @@
 
 ## Decision (G-01)
 
-- **Reference implementation:** TypeScript in this repository (`collectors/pipeline.ts`, `submit()`), validated by golden JSON fixtures and CI.
+- **Reference implementation:** TypeScript in this repository (`runtimes/typescript/collectors/core/collector-engine.ts` — `submit()`, re-exported from `collectors/pipeline.ts`), validated by golden JSON fixtures and CI.
 - **App integration options:**
   1. **Port** the pipeline to Swift and keep behavioral parity with the same fixtures, or
   2. **JSON round-trip:** build the ingestion envelope + HealthKit payload JSON in Swift, call a small helper that runs the TS pipeline (e.g. dev tool / test host only), or embed logic duplicated from the port.
@@ -41,7 +41,7 @@ Record any intentional product differences in adapter notes.
 
 Full narrative, diagrams, and extension points:
 
-- `../GlucoseAITracker/Documentation/OGT-OGIS-TWO-STAGE-ADAPTATION.md` (sibling checkout)
+- `../GlucoseAITracker/Documentation/OGT-OGIS-INTEGRATION.md` (sibling checkout)
 
 This OGT repository defines the **TypeScript** reference pipeline; the Swift path is a **documented subset** (see matrix). Supporting artifacts:
 

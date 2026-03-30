@@ -39,6 +39,8 @@ Adapters submit a single JSON object:
 | `mock` | [`mock-payload.schema.json`](./mock-payload.schema.json) |
 | `dexcom` | [`dexcom-payload.schema.json`](./dexcom-payload.schema.json) |
 
+**Dexcom:** The Dexcom payload schema is **OGT’s** contract for tests and adapters (see `description` inside the file). It is **not** published or endorsed by Dexcom as their API schema. For authoritative Dexcom cloud APIs (OAuth, endpoints, response shapes), use **[Dexcom Developer documentation](https://developer.dexcom.com/docs/)** and implement a mapper from API responses into this payload (or evolve the schema with a version bump).
+
 ## Pinned OGIS schema
 
 - [`pinned/glucose.reading.v0_1.json`](./pinned/glucose.reading.v0_1.json) — canonical output validation.

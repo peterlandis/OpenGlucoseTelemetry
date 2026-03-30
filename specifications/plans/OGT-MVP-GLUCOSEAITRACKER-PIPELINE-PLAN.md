@@ -41,18 +41,18 @@ Target layout for the MVP slice (logical; language/runtime choice is implementat
 
 ```text
 OpenGlucoseTelemetry/
-├── collectors/           # validation, normalization, dedupe hooks (MVP: in-process pipeline)
-├── adapters/             # source-specific: healthkit, mock, …
+├── runtimes/
+│   ├── typescript/     # collectors/, adapters/, dev/ — Node reference runtime
+│   └── swift/            # Swift Package (library + tests; evolve toward full pipeline)
 ├── spec/                 # OGT-local contracts only (ingestion envelope JSON Schema); NOT a copy of full OGIS
 ├── examples/             # sample envelopes + canonical outputs (may symlink or reference OGIS /examples)
-├── dev/                  # harness scripts, docker-compose (optional), fixture runners
 ├── specifications/
 │   ├── plans/
 │   └── tasks/
 └── README.md             # updated “Core README” section for MVP (see §2)
 ```
 
-**Deliverable:** Directories exist, CI runs tests from `dev/` or package test script, README points to OGIS for canonical schemas.
+**Deliverable:** Directories exist, CI runs tests from `runtimes/typescript/` (pnpm workspace) or Swift PM under `runtimes/swift/`, README points to OGIS for canonical schemas.
 
 ---
 
@@ -138,8 +138,8 @@ Applied **after** initial mapping into canonical fields, **before** final schema
 
 **Constraint:** Apple HealthKit APIs are **iOS-only**. For the OGT repository to remain testable on Linux CI:
 
-- **Reference path A (recommended for OGT repo):** Implement `adapters/healthkit` as a **mapper from a serializable HealthKit sample JSON** (fixture) → intermediate → OGIS. Same code paths used by GlucoseAITracker when it builds the payload from `HKQuantitySample`.
-- **Reference path B:** Swift package `adapters/apple-healthkit` in OGT monorepo, executed on macOS CI only.
+- **Reference path A (recommended for OGT repo):** Implement `runtimes/typescript/adapters/healthkit` as a **mapper from a serializable HealthKit sample JSON** (fixture) → intermediate → OGIS. Same code paths used by GlucoseAITracker when it builds the payload from `HKQuantitySample`.
+- **Reference path B:** Swift package `runtimes/swift/Sources/...` (or `adapters/apple-healthkit` target) in OGT monorepo, executed on macOS CI only.
 
 **Responsibilities:**
 
@@ -180,13 +180,13 @@ IngestionEnvelope → [Adapter: source → intermediate] → [Mapper: → glucos
 
 **Options (pick one for MVP):**
 
-- **Node/TS:** `pnpm tsx dev/run-pipeline.ts examples/ingestion/healthkit-sample.json`
+- **Node/TS:** `pnpm tsx runtimes/typescript/dev/run-pipeline.ts examples/ingestion/healthkit-sample.json` (from repo root; or `pnpm pipeline:dev` with paths under `runtimes/typescript`)
 - **Python:** `python dev/run_pipeline.py examples/ingestion/healthkit-sample.json`
 - **Shell + `jq`:** only if validation runs in a small compiled helper — less ideal.
 
 **Behavior:** Load sample path from argv, run adapter + mapper + validation, print canonical JSON to stdout, exit non-zero on error with stderr details.
 
-**Deliverable:** Documented in `dev/README.md`; one command in root README under “Getting Started (MVP)”.
+**Deliverable:** Documented in `runtimes/typescript/dev/README.md`; one command in root README under “Getting Started (MVP)”.
 
 ---
 

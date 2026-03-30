@@ -58,6 +58,7 @@ Major changes should go through an RFC (Request for Comments).
 - Include tests where appropriate
 - Avoid vendor-specific assumptions in core components
 - Keep adapters isolated from core logic
+- **Runtime layout:** shared contracts live at the repo root (`spec/`, `examples/`). Language-specific implementations live under **`runtimes/<language>/`** (for example `runtimes/typescript/` for Node, `runtimes/swift/` for Swift Package Manager). Each runtime must include **`collectors/`** and **`adapters/`** as described in [`runtimes/RUNTIME-TEMPLATE.md`](./runtimes/RUNTIME-TEMPLATE.md). Add new platforms by introducing another `runtimes/<name>/` tree rather than mixing runtimes at the top level.
 
 ---
 

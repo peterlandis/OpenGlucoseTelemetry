@@ -1,12 +1,12 @@
 # Canonical examples (`glucose.reading` v0.1)
 
-Files here are **expected OGIS-shaped JSON** used by Vitest golden tests (see `collectors/pipeline.test.ts`). Names align with ingestion fixtures under `examples/ingestion/` (e.g. `healthkit-sample.json` → `healthkit-sample.expected.json`).
+Files here are **expected OGIS-shaped JSON** used by Vitest golden tests (see `runtimes/typescript/collectors/pipeline.test.ts`). Names align with ingestion fixtures under `examples/ingestion/` (e.g. `healthkit-sample.json` → `healthkit-sample.expected.json`).
 
 ## Cross-runtime golden (TypeScript ↔ Swift)
 
 **Goal:** The same logical reading should produce **semantically equivalent** canonical JSON whether it is processed by:
 
-1. **This repo:** `pnpm build && pnpm pipeline path/to/envelope.json` (runs `dev/run-pipeline.js` → `submit()`), or  
+1. **This repo:** `pnpm build && pnpm pipeline path/to/envelope.json` (runs `runtimes/typescript/dist/dev/run-pipeline.js` → `submit()`), or  
 2. **GlucoseAITracker:** map a `Glucose` row → `GlucoseReadingCanonical`, then serialize to JSON (test harness, manual export, or future CLI).
 
 **Process**

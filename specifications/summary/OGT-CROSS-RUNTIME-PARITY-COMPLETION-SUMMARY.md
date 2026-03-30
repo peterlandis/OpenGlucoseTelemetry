@@ -11,15 +11,15 @@
 | Parity matrix (D1) | `specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md` |
 | Handoff + consumer pattern (D2) | `specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md` |
 | Canonical / golden process + sample (D3) | `examples/canonical/README.md`, `examples/canonical/manual-sample.swift-export.json` |
-| Parity JSON check (stretch) | `dev/parity-check.mjs`, `pnpm parity:check` in `package.json` |
-| Port guidance (D2/D3 overlap) | `collectors/README.md` (“Other language ports”), root `README.md` links |
-| Vitest guard for OGIS factor (A-03, no TS behavior change) | `collectors/normalize.test.ts` |
+| Parity JSON check (stretch) | `runtimes/typescript/dev/parity-check.mjs`, `pnpm parity:check` in root `package.json` |
+| Port guidance (D2/D3 overlap) | `runtimes/typescript/collectors/README.md` (“Other language ports”), root `README.md` links |
+| Vitest guard for OGIS factor (A-03, no TS behavior change) | `runtimes/typescript/collectors/normalize.test.ts` |
 | Feature rows (D5) | `FEATURES.md` — PAR-001, PAR-002, DOC-005 → **Complete** |
 
 ## Decisions
 
 1. **mmol/L factor:** TypeScript already uses **`MGDL_PER_MMOL = 18.018`** per OGIS unit-semantics. **GlucoseAITracker** still uses **18.0** in `OGTGlucoseIngestPipeline` and `GlucoseReadingCanonicalMapper` — documented as **intentional drift** pending an app PR; no TS change required.
-2. **Future timestamp skew:** TS enforces **15 minutes** (`FUTURE_SKEW_MS` in `collectors/semantic.ts`). Swift **omits** this check — documented as **Waived** in the parity matrix with rationale (on-device / backfill semantics).
+2. **Future timestamp skew:** TS enforces **15 minutes** (`FUTURE_SKEW_MS` in `runtimes/typescript/collectors/validation/semantic.ts`). Swift **omits** this check — documented as **Waived** in the parity matrix with rationale (on-device / backfill semantics).
 3. **Full Ajv in Swift:** Out of scope for GAT; matrix records **subset** validation in-app vs full schema in TS.
 
 ## Residual drift / follow-ups
