@@ -9,10 +9,10 @@ Companion to [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-C
 ## Track P — Parity matrix
 
 - [x] **OGT-PAR-P-01** Create `specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md` with a table: **Rule** | **TS location** | **Swift location** | **Match?** | **Notes / owner**.
-- [x] **OGT-PAR-P-02** Document **event_type** / **event_version** enforcement (`collectors/` + schema validation vs Swift `OGTGlucoseIngestPipeline`).
+- [x] **OGT-PAR-P-02** Document **event_type** / **event_version** enforcement (`runtimes/typescript/collectors/` + schema validation vs Swift `OGTGlucoseIngestPipeline`).
 - [x] **OGT-PAR-P-03** Document **empty** `subject_id`, `raw_event_id`, `source_system`, `adapter_version` handling.
 - [x] **OGT-PAR-P-04** Document **value > 0** and **20–600 mg/dL equivalent** rules (including mmol/L path).
-- [x] **OGT-PAR-P-05** Document **future timestamp** policy: `FUTURE_SKEW_MS` in `collectors/semantic.ts` vs Swift (currently may be absent).
+- [x] **OGT-PAR-P-05** Document **future timestamp** policy: `FUTURE_SKEW_MS` in `runtimes/typescript/collectors/semantic.ts` vs Swift (currently may be absent).
 - [x] **OGT-PAR-P-06** Document **mmol/L ↔ mg/dL** factor: TS `MGDL_PER_MMOL` (18.018) vs Swift (`18.0` today) vs OGIS `unit-semantics.md`.
 
 ---
@@ -21,7 +21,7 @@ Companion to [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-C
 
 - [x] **OGT-PAR-A-01** If OGIS normative factor is **18.018**: update TS only if already wrong; track Swift change in GlucoseAITracker repo (separate PR). *(TS already 18.018; Swift drift documented in matrix + completion summary.)*
 - [x] **OGT-PAR-A-02** If Swift should match **future skew**: either add Swift tests documenting omission or open GlucoseAITracker issue; update matrix **Waived** row with rationale. *(Matrix **Waived** rows + summary.)*
-- [x] **OGT-PAR-A-03** Add or extend **Vitest** cases for any TS behavior change from A-01. *(No TS change; added `collectors/normalize.test.ts` for regression on **18.018**.)*
+- [x] **OGT-PAR-A-03** Add or extend **Vitest** cases for any TS behavior change from A-01. *(No TS change; added `runtimes/typescript/collectors/normalize.test.ts` for regression on **18.018**.)*
 
 ---
 
@@ -35,8 +35,8 @@ Companion to [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-C
 
 ## Track D — Documentation / handoff
 
-- [x] **OGT-PAR-D-01** Update `specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`: link **OGT-SWIFT-PARITY-MATRIX.md**, summarize **native row → OGIS → semantic gate**, link GlucoseAITracker **OGT-OGIS-TWO-STAGE-ADAPTATION.md**.
-- [x] **OGT-PAR-D-02** Update root `README.md` or `collectors/README.md` with one paragraph: **Other language ports** — start from parity matrix + pinned schema.
+- [x] **OGT-PAR-D-01** Update `specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`: link **OGT-SWIFT-PARITY-MATRIX.md**, summarize **native row → OGIS → semantic gate**, link GlucoseAITracker **OGT-OGIS-INTEGRATION.md**.
+- [x] **OGT-PAR-D-02** Update root `README.md` or `runtimes/typescript/collectors/README.md` with one paragraph: **Other language ports** — start from parity matrix + pinned schema.
 - [x] **OGT-PAR-D-03** Update [FEATURES.md](../../FEATURES.md) statuses for **PAR-001**, **PAR-002**, **DOC-005** when complete.
 
 ---

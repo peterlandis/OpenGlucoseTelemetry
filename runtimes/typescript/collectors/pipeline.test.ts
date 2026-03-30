@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { submit } from "./pipeline.js";
 import { DedupeTracker } from "./dedupe.js";
 import { normalizeTimestamp, normalizeGlucoseToMgdl } from "./normalize.js";
+import { specPaths } from "./paths.js";
 
-const root: string = join(dirname(fileURLToPath(import.meta.url)), "..");
+const root: string = specPaths.repoRoot;
 
 function readExample(rel: string): unknown {
   const raw: string = readFileSync(join(root, rel), "utf8");

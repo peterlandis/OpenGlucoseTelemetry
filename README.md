@@ -23,11 +23,51 @@ OGT sits between source systems and downstream consumers as the runtime framewor
 
 ---
 
+## For implementers
+
+Use these docs when **implementing a runtime**, **adding a new provider (`source`)**, or **matching golden fixtures** (avoid duplicating long checklists in this file — they live in **`runtimes/RUNTIME-TEMPLATE.md`**).
+
+| Doc | What it covers |
+|-----|----------------|
+| **[`runtimes/RUNTIME-TEMPLATE.md`](./runtimes/RUNTIME-TEMPLATE.md)** | **Pipeline layers** (numbered table), data flow, **adding a new provider** (spec → examples → TS + Swift files), **adding a new language runtime** |
+| **[`runtimes/README.md`](./runtimes/README.md)** | Runtimes index, short layer list, links to TS / Swift READMEs and architectures |
+| **[`runtimes/typescript/ARCHITECTURE.md`](./runtimes/typescript/ARCHITECTURE.md)** | TypeScript `submit()` flow (diagrams) |
+| **[`runtimes/swift/ARCHITECTURE.md`](./runtimes/swift/ARCHITECTURE.md)** | Swift collector flow (diagrams) |
+
+The **Repository layout** section below repeats a **one-paragraph** summary of MVP stages and points to the same template for the full checklist.
+
+---
+
+## Repository layout
+
+This repository is organized as **shared contracts** plus **per-runtime implementations**:
+
+| Area | Purpose |
+|------|---------|
+| [`spec/`](./spec/) | JSON Schemas, pinned OGIS, schema READMEs (language-agnostic contract) |
+| [`examples/`](./examples/) | Golden ingestion and canonical JSON fixtures |
+| [`specifications/`](./specifications/) | Plans, handoff, parity matrices |
+| [`runtimes/`](./runtimes/) | Implementations — see [`runtimes/README.md`](./runtimes/README.md); every runtime follows [`runtimes/RUNTIME-TEMPLATE.md`](./runtimes/RUNTIME-TEMPLATE.md) (`collectors/` + `adapters/`) |
+
+### Runtime pipeline layers (MVP)
+
+Each language runtime under [`runtimes/`](./runtimes/) implements the same **ordered stages**: **ingress** (envelope) → **envelope validation** → **per-source payload validation** → **adapter map** (`adapters/<source>/`) → **normalize** → **semantic rules** → **optional dedupe** → **OGIS `glucose.reading` v0.1 validation** → **success or structured error**. **`collectors/`** own orchestration; **`adapters/`** own vendor JSON → pre-normalize canonical fields.
+
+**Numbered layer table, per-runtime file paths, and step-by-step “new provider” work:** **[`runtimes/RUNTIME-TEMPLATE.md`](./runtimes/RUNTIME-TEMPLATE.md)** (see also **[For implementers](#for-implementers)** above).
+
+**Adding a new provider (`source`):** add payload schema under [`spec/`](./spec/), golden JSON under [`examples/`](./examples/), then implement routing + adapter in **each** runtime (TypeScript + Swift today). Full checklist: **`RUNTIME-TEMPLATE.md`** → section *Adding a new provider*.
+
+**Node.js / TypeScript** reference pipeline: [`runtimes/typescript/`](./runtimes/typescript/) (`collectors/`, `adapters/`, `dev/`).
+
+**Swift** library (Swift Package Manager): [`runtimes/swift/`](./runtimes/swift/). Add it as a dependency from an app or framework; evolve the implementation toward full parity with the TypeScript collector using [`specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](./specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md) and golden JSON under [`examples/`](./examples/).
+
+---
+
 ## MVP pipeline (GlucoseAITracker / GAT)
 
-For **Phase 1 MVP**, this repository implements an in-process **ingestion and normalization pipeline** in TypeScript: adapters wrap vendor payloads in an **ingestion envelope**, the collector validates and normalizes, and output is **OGIS `glucose.reading` v0.1** validated against a pinned JSON Schema.
+For **Phase 1 MVP**, the **TypeScript runtime** under [`runtimes/typescript/`](./runtimes/typescript/) implements an in-process **ingestion and normalization pipeline**: adapters wrap vendor payloads in an **ingestion envelope**, the collector validates and normalizes, and output is **OGIS `glucose.reading` v0.1** validated against a pinned JSON Schema.
 
-- **OGT (this repo)** — ingestion envelope, adapter contracts, validation orchestration, normalization code (`collectors/`, `adapters/`, `spec/`).
+- **OGT (this repo)** — ingestion envelope, adapter contracts, validation orchestration, normalization code (`runtimes/typescript/collectors/`, `runtimes/typescript/adapters/`, `spec/`).
 - **OGIS** — canonical event shape and semantics; authoritative schema in the **OpenGlucoseInteroperabilityStandard** (OGIS) repository. OGT pins a copy under [`spec/pinned/`](./spec/pinned/) — see [`spec/pinned/PIN.md`](./spec/pinned/PIN.md).
 
 **Ingestion envelope schema:** [`spec/ingestion-envelope.schema.json`](./spec/ingestion-envelope.schema.json) (field descriptions: [`spec/README.md`](./spec/README.md)).
@@ -36,15 +76,17 @@ For **Phase 1 MVP**, this repository implements an in-process **ingestion and no
 
 ### Reference implementation vs native apps (Swift, etc.)
 
-**Node.js and TypeScript in this repository are a portable reference implementation**, not a requirement for every OGT consumer. They exist so the pipeline can run in CI, power golden tests, and provide readable source for `submit()`-style behavior (`collectors/`, `adapters/`).
+**Node.js and TypeScript under [`runtimes/typescript/`](./runtimes/typescript/) are a portable reference implementation**, not a requirement for every OGT consumer. They exist so the pipeline can run in CI, power golden tests, and provide readable source for `submit()`-style behavior.
 
-**OGT as a contract** is language-agnostic: the **JSON Schemas** under [`spec/`](./spec/), the **pinned OGIS** [`glucose.reading`](./spec/pinned/glucose.reading.v0_1.json) schema, **examples** under [`examples/`](./examples/), and **adapter field mappings** (e.g. [`adapters/healthkit/README.md`](./adapters/healthkit/README.md), [`adapters/dexcom/README.md`](./adapters/dexcom/README.md)) define what “OGT-compliant” ingestion means.
+**OGT as a contract** is language-agnostic: the **JSON Schemas** under [`spec/`](./spec/), the **pinned OGIS** [`glucose.reading`](./spec/pinned/glucose.reading.v0_1.json) schema, **examples** under [`examples/`](./examples/), and **adapter field mappings** (e.g. [`runtimes/typescript/adapters/healthkit/README.md`](./runtimes/typescript/adapters/healthkit/README.md), [`runtimes/typescript/adapters/dexcom/README.md`](./runtimes/typescript/adapters/dexcom/README.md)) define what “OGT-compliant” ingestion means.
 
-**Native mobile apps**—for example **GlucoseAITracker on iPhone**—typically implement the same steps **in Swift on device**: validate the ingestion envelope, route by `source`, map vendor payloads to pre-canonical fields, normalize time and units per policy, apply semantic rules, then validate against the OGIS schema. That gives offline-friendly, low-latency behavior without shipping a Node runtime. Alignment with this repo is proven by **matching fixtures** (same shapes as `examples/ingestion/` → same canonical output as `examples/canonical/`) and, in development, by comparing to `pnpm pipeline` output—not by running Node inside the app. **TS ↔ Swift rule parity** (including known drift such as mmol/L factor and future-timestamp policy) is tracked in [`specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](./specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md); optional JSON diff: `pnpm parity:check <a.json> <b.json>` after [`examples/canonical/README.md`](./examples/canonical/README.md).
+**Swift** adopters should use [`runtimes/swift/`](./runtimes/swift/) as the home for the Swift Package and implement collector semantics to match golden output. **Native mobile apps** often run the same steps **on device** for offline-friendly, low-latency behavior without shipping a Node runtime. Alignment is proven by **matching fixtures** (same shapes as `examples/ingestion/` → same canonical output as `examples/canonical/`) and by comparing to `pnpm pipeline` output during development. **TS ↔ Swift rule parity** (including known drift such as mmol/L factor and future-timestamp policy) is tracked in [`specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](./specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md); optional JSON diff: `pnpm parity:check <a.json> <b.json>` after [`examples/canonical/README.md`](./examples/canonical/README.md).
 
 More detail for the GlucoseAITracker integration: [`specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`](./specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md).
 
 ### Getting Started (MVP)
+
+From the **repository root**:
 
 ```bash
 pnpm install
@@ -53,9 +95,11 @@ pnpm pipeline examples/ingestion/healthkit-sample.json
 pnpm pipeline examples/ingestion/dexcom-sample.json
 ```
 
-Run tests: `pnpm test`. See [`dev/README.md`](./dev/README.md) for exit codes and the `pipeline:dev` script.
+Run tests: `pnpm test`. See [`runtimes/typescript/dev/README.md`](./runtimes/typescript/dev/README.md) for exit codes and the `pipeline:dev` script.
 
 **GlucoseAITracker handoff (GLUCOSE-009):** [`specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md`](./specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md).
+
+**Swift Package:** [`runtimes/swift/README.md`](./runtimes/swift/README.md), [`runtimes/swift/ARCHITECTURE.md`](./runtimes/swift/ARCHITECTURE.md) — `cd runtimes/swift && swift build && swift test`.
 
 ---
 
@@ -471,7 +515,7 @@ Initial setup will include:
 
 ## Status
 
-**Draft v0.1** — early architecture and design phase. **MVP pipeline slice** (ingestion envelope, HealthKit + mock adapters, normalization, OGIS validation, fixtures, CLI harness) is implemented under `collectors/`, `adapters/`, `spec/`, `examples/`, and `dev/`.
+**Draft v0.1** — early architecture and design phase. **MVP pipeline slice** (ingestion envelope, HealthKit + mock adapters, normalization, OGIS validation, fixtures, CLI harness) lives under `runtimes/typescript/` (`collectors/`, `adapters/`, `dev/`), plus shared `spec/` and `examples/`.
 
 ---
 

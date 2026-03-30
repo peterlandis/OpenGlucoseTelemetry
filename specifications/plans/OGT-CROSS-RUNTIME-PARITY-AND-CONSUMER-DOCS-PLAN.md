@@ -8,7 +8,7 @@
 
 ## Problem statement
 
-GlucoseAITracker implements **OGT-style** validation and **OGIS**-shaped canonical readings **on device** (`OGTGlucoseIngestPipeline`, `GlucoseReadingCanonicalMapper`). The OGT repository remains the **regression oracle** for the TypeScript collector (`collectors/pipeline.ts`, `collectors/semantic.ts`, `collectors/normalize.ts`).
+GlucoseAITracker implements **OGT-style** validation and **OGIS**-shaped canonical readings **on device** (`OGTGlucoseIngestPipeline`, `GlucoseReadingCanonicalMapper`). The OGT repository remains the **regression oracle** for the TypeScript collector (`runtimes/typescript/collectors/pipeline.ts`, `runtimes/typescript/collectors/semantic.ts`, `runtimes/typescript/collectors/normalize.ts`).
 
 Today:
 
@@ -24,9 +24,9 @@ Delivering this plan **reduces silent drift**, makes contributions from mobile *
 
 1. **Parity matrix** — Document TS vs Swift behavior for each semantic and structural check relevant to `glucose.reading` v0.1 ingest, with explicit **“intentional difference”** callouts and owners.
 2. **mmol/L ↔ mg/dL** — Align implementations with **OGIS [unit-semantics.md](https://github.com/peterlandis/OpenGlucoseInteroperabilityStandard/blob/main/spec/core/unit-semantics.md)** (factor **18.018**) or record **normative exceptions** in both OGT and GlucoseAITracker with the same wording.
-3. **Future timestamp policy** — Either document that Swift omits **15-minute skew** (`FUTURE_SKEW_MS` in `collectors/semantic.ts`) or add equivalent policy to Swift and note it in the matrix.
+3. **Future timestamp policy** — Either document that Swift omits **15-minute skew** (`FUTURE_SKEW_MS` in `runtimes/typescript/collectors/semantic.ts`) or add equivalent policy to Swift and note it in the matrix.
 4. **Shared golden artifacts (optional CI)** — At minimum: **documented process** to export canonical JSON from Swift (or hand-maintain) under `examples/canonical/` with a **parity note**; stretch: CI job that `diff`s TS pipeline output vs checked-in Swift-exported file for one fixture.
-5. **Consumer documentation in OGT** — Extend handoff / README with **two-stage adaptation** summary and link to GlucoseAITracker’s [OGT-OGIS-TWO-STAGE-ADAPTATION.md](https://github.com/peterlandis/GlucoseAITracker/blob/main/Documentation/OGT-OGIS-TWO-STAGE-ADAPTATION.md) (path when repos are siblings: `../GlucoseAITracker/Documentation/OGT-OGIS-TWO-STAGE-ADAPTATION.md`).
+5. **Consumer documentation in OGT** — Extend handoff / README with **two-stage adaptation** summary and link to GlucoseAITracker’s [OGT-OGIS-INTEGRATION.md](https://github.com/peterlandis/GlucoseAITracker/blob/main/Documentation/OGT-OGIS-INTEGRATION.md) (path when repos are siblings: `../GlucoseAITracker/Documentation/OGT-OGIS-INTEGRATION.md`).
 
 ---
 
@@ -49,7 +49,7 @@ This OGT plan **implements** alignment in TS and **tracks** Swift parity; OGIS m
 | D1 | Parity matrix markdown | `specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md` (new) |
 | D2 | Updated handoff: two-stage consumer + links | `specifications/handoff/OGT-GLUCOSE-009-CONSUMPTION.md` |
 | D3 | Optional: Swift-sourced or hand-synced canonical JSON + README note | `examples/canonical/` |
-| D4 | TS code or tests only if matrix requires behavior change | `collectors/normalize.ts`, `collectors/semantic.ts`, tests |
+| D4 | TS code or tests only if matrix requires behavior change | `runtimes/typescript/collectors/normalize.ts`, `runtimes/typescript/collectors/semantic.ts`, tests |
 | D5 | Completion summary (when wave closes) | `specifications/summary/OGT-CROSS-RUNTIME-PARITY-COMPLETION-SUMMARY.md` |
 
 ---

@@ -8,7 +8,7 @@ Companion to [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](../plans/OGT-MVP-GLUCOS
 
 ## Track O — Repository and documentation
 
-- [x] **OGT-MVP-O-01** Create directory scaffold: `collectors/`, `adapters/`, `spec/`, `examples/`, `dev/` (placeholder README in each).
+- [x] **OGT-MVP-O-01** Create directory scaffold: `runtimes/typescript/collectors/`, `runtimes/typescript/adapters/`, `spec/`, `examples/`, `runtimes/typescript/dev/` (placeholder README in each). *(Layout evolved: TypeScript runtime now lives under `runtimes/typescript/`; shared `spec/` and `examples/` remain at repo root.)*
 - [x] **OGT-MVP-O-02** Add `specifications/plans` and `specifications/tasks` index or link from root `README.md`.
 - [x] **OGT-MVP-O-03** Update root `README.md` with MVP subsection: OGT vs OGIS, link to OGIS repo, link to ingestion envelope schema.
 - [x] **OGT-MVP-O-04** Pin OGIS v0.1 dependency strategy (submodule, npm/git dependency, or copy `glucose.reading` schema with version file + SHA note).
@@ -45,7 +45,7 @@ Companion to [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](../plans/OGT-MVP-GLUCOS
 
 - [x] **OGT-MVP-A-01** **Mock adapter:** generates valid envelope + minimal payload → known canonical output (for pipeline integration test).
 - [x] **OGT-MVP-A-02** **HealthKit adapter:** map fixture `payload` → OGIS `glucose.reading` (including `device`, `provenance`, `measurement_source` best-effort).
-- [x] **OGT-MVP-A-03** Document mapping table: HK JSON field → OGIS field (markdown under `adapters/healthkit/README.md`).
+- [x] **OGT-MVP-A-03** Document mapping table: HK JSON field → OGIS field (markdown under `runtimes/typescript/adapters/healthkit/README.md`).
 - [x] **OGT-MVP-A-04** (Optional) Swift package or GlucoseAITracker bridge doc: live `HKQuantitySample` → same JSON `payload` shape as fixtures.
 
 ---
@@ -69,8 +69,8 @@ Companion to [OGT-MVP-GLUCOSEAITRACKER-PIPELINE-PLAN.md](../plans/OGT-MVP-GLUCOS
 
 ## Track D — Dev harness
 
-- [x] **OGT-MVP-D-01** Implement CLI/script under `dev/` (see plan §9).
-- [x] **OGT-MVP-D-02** `dev/README.md`: prerequisites, run command, exit codes.
+- [x] **OGT-MVP-D-01** Implement CLI/script under `runtimes/typescript/dev/` (see plan §9).
+- [x] **OGT-MVP-D-02** `runtimes/typescript/dev/README.md`: prerequisites, run command, exit codes.
 - [x] **OGT-MVP-D-03** Root README “Getting Started (MVP)” one-liner for harness.
 
 ---

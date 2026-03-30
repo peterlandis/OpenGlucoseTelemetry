@@ -10,7 +10,7 @@
 
 ## Executive summary
 
-The Open Glucose Telemetry repository now includes a **portable TypeScript MVP pipeline** that accepts **ingestion envelopes** from adapters, validates envelope and per-source payloads, maps **HealthKit-shaped**, **Dexcom EGV-style**, and **mock** JSON payloads to a pre-canonical reading, **normalizes** timestamps (UTC, millisecond precision) and glucose **to mg/dL** per GAT policy, applies **semantic gates** (plausible mg/dL range, future `observed_at` skew), optionally **dedupes** in memory, and validates the result against a **pinned OGIS** `glucose.reading` v0.1 JSON Schema. **Golden and negative fixtures**, a **`dev/` CLI**, **`pnpm verify`** (build + tests + smoke), and **GitHub Actions** provide reproducible behavior without an iPhone. **Non-goals** for this slice remain unchanged: durable bus, REST/WebSocket APIs, webhook exporter, full compose stack.
+The Open Glucose Telemetry repository now includes a **portable TypeScript MVP pipeline** under **`runtimes/typescript/`** that accepts **ingestion envelopes** from adapters, validates envelope and per-source payloads, maps **HealthKit-shaped**, **Dexcom EGV-style**, and **mock** JSON payloads to a pre-canonical reading, **normalizes** timestamps (UTC, millisecond precision) and glucose **to mg/dL** per GAT policy, applies **semantic gates** (plausible mg/dL range, future `observed_at` skew), optionally **dedupes** in memory, and validates the result against a **pinned OGIS** `glucose.reading` v0.1 JSON Schema. **Golden and negative fixtures**, a **`runtimes/typescript/dev/` CLI**, **`pnpm verify`** from the repo root (build + tests + smoke), and **GitHub Actions** provide reproducible behavior without an iPhone. **Non-goals** for this slice remain unchanged: durable bus, REST/WebSocket APIs, webhook exporter, full compose stack.
 
 ---
 
@@ -20,8 +20,8 @@ The Open Glucose Telemetry repository now includes a **portable TypeScript MVP p
 
 | Path | Purpose |
 |------|---------|
-| `collectors/` | `submit()` pipeline, normalization, semantic rules, Ajv validators, optional `DedupeTracker`, Vitest tests |
-| `adapters/healthkit/`, `adapters/dexcom/`, `adapters/mock/` | Source mappers + field mapping docs |
+| `runtimes/typescript/collectors/` | `submit()` pipeline, normalization, semantic rules, Ajv validators, optional `DedupeTracker`, Vitest tests |
+| `runtimes/typescript/adapters/healthkit/`, `runtimes/typescript/adapters/dexcom/`, `runtimes/typescript/adapters/mock/` | Source mappers + field mapping docs |
 | `spec/ingestion-envelope.schema.json` | Normative ingestion envelope (Draft 2020-12) |
 | `spec/healthkit-payload.schema.json` | Serializable HK glucose sample shape |
 | `spec/dexcom-payload.schema.json` | Serializable Dexcom EGV-style payload |
@@ -30,7 +30,7 @@ The Open Glucose Telemetry repository now includes a **portable TypeScript MVP p
 | `spec/README.md` | Envelope and payload documentation |
 | `examples/ingestion/` | Positive + negative envelopes |
 | `examples/canonical/*-sample.expected.json` | Golden expected `glucose.reading` outputs (HealthKit, Dexcom, …) |
-| `dev/run-pipeline.ts` | CLI: JSON file → stdout canonical or stderr structured error |
+| `runtimes/typescript/dev/run-pipeline.ts` | CLI: JSON file → stdout canonical or stderr structured error |
 | `specifications/handoff/` | GLUCOSE-009 consumption + version compatibility |
 
 ### Pipeline behavior (high level)
@@ -54,8 +54,8 @@ Structured errors: `{ code, message, field?, trace_id }` with stable `code` valu
 
 | Item | Purpose |
 |------|---------|
-| `package.json` | `pnpm build`, `pnpm test`, `pnpm pipeline`, `pnpm verify` |
-| `tsconfig.build.json` | Emits `dist/` for Node CLI (no tsx required at runtime) |
+| Root `package.json` + `pnpm-workspace.yaml` | Workspace scripts: `pnpm build`, `pnpm test`, `pnpm pipeline`, `pnpm verify` |
+| `runtimes/typescript/tsconfig.build.json` | Emits `runtimes/typescript/dist/` for Node CLI (no tsx required at runtime) |
 | `.github/workflows/ogt-mvp-ci.yml` | `pnpm install --frozen-lockfile` + `pnpm verify` on push/PR |
 
 ### Documentation
@@ -73,7 +73,7 @@ Structured errors: `{ code, message, field?, trace_id }` with stable `code` valu
 | OGIS-001, OGIS-002 | Pinned schema + Ajv validation after map/normalize |
 | COL-001 — COL-005 | Envelope, gates, normalization, optional dedupe, provenance/trace |
 | ADP-001, ADP-006, ADP-007 | Mock + HealthKit + Dexcom fixture mappers |
-| DEV-003 | `dev/run-pipeline.ts` + `dev/README.md` |
+| DEV-003 | `runtimes/typescript/dev/run-pipeline.ts` + `runtimes/typescript/dev/README.md` |
 | QA-001 | Golden + negative tests + CI smoke |
 
 Explicitly **not** in this summary (still **Next** / **Later** in [FEATURES.md](../../FEATURES.md)): BUS-*, QRY-*, RT-001, EXP-*, full SDK-001 package, DEV-001 compose, QA-002 bus→query integration.
