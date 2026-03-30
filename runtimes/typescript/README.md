@@ -1,8 +1,45 @@
 # Open Glucose Telemetry — TypeScript runtime
 
-npm package **`@openglucose/telemetry-mvp`** (private workspace member): reference implementation with shared **`collectors/`** (orchestration) and **`adapters/`** (per-source mapping). Other runtimes (e.g. [`../swift`](../swift)) mirror this layout and behavior.
+Publishable npm package **`@openglucose/telemetry-runtime`**: reference implementation with shared **`collectors/`** (orchestration) and **`adapters/`** (per-source mapping). Other runtimes (e.g. [`../swift`](../swift)) mirror this layout and behavior.
 
-Shared contracts (schemas, fixtures) live at the repo root: [`../../spec`](../../spec), [`../../examples`](../../examples). Parity expectations: [`../../specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](../../specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md).
+In a full **OpenGlucoseTelemetry** checkout, shared contracts (schemas, fixtures) also live at the repo root: [`../../spec`](../../spec), [`../../examples`](../../examples). The published tarball includes **`bundled/spec/`** (copies of those JSON Schemas) so **`submit()`** works without a checkout. Parity expectations: [`../../specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](../../specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md).
+
+---
+
+## Installing and using
+
+**Install** (pick your package manager):
+
+```bash
+npm install @openglucose/telemetry-runtime
+# or
+pnpm add @openglucose/telemetry-runtime
+# or
+yarn add @openglucose/telemetry-runtime
+```
+
+**Runtime usage** (ESM; Node 20+):
+
+```ts
+import { submit } from "@openglucose/telemetry-runtime";
+
+const envelope: unknown = JSON.parse(rawJson) as unknown;
+const result = submit(envelope);
+
+if (result.ok) {
+  console.log(result.value); // CanonicalGlucoseReadingV01
+} else {
+  console.error(result.error); // StructuredPipelineError
+}
+```
+
+Optional **`DedupeTracker`** and **`SubmitOptions`** are re-exported from the same entry (see [`collectors/pipeline.ts`](./collectors/pipeline.ts)).
+
+**Publishing:** the package is configured for public scoped publish (`publishConfig.access`). Publishing requires an **`@openglucose`** org (or change the package `name` / scope to match your registry).
+
+**Local development** in this monorepo: depend on the workspace package path or use `pnpm link` from **`runtimes/typescript`**.
+
+Completion summary: [`../../specifications/summary/OGT-TYPESCRIPT-PACKAGE-COMPLETION-SUMMARY.md`](../../specifications/summary/OGT-TYPESCRIPT-PACKAGE-COMPLETION-SUMMARY.md).
 
 ---
 
@@ -26,7 +63,7 @@ unknown JSON (ingestion envelope)
 
 **Optional:** pass **`SubmitOptions`** with **`dedupe`** (in-memory dedupe; duplicates → **`DUPLICATE_EVENT`**).
 
-**Tooling paths:** **`specPaths`** in [`collectors/tooling/paths.ts`](./collectors/tooling/paths.ts) locates the repo root and schema file paths (used by validators and tests)—it is **not** part of the app ingest path. **`dev/run-pipeline.ts`** is a small CLI that reads a JSON file and prints **`submit`** output.
+**Tooling paths:** **`specPaths`** in [`collectors/tooling/paths.ts`](./collectors/tooling/paths.ts) locates either a full repo root (`spec/` + `examples/`) or the **`bundled/spec/`** copy inside the npm package so validators load JSON Schemas correctly. It is **not** part of the per-request ingest path. **`dev/run-pipeline.ts`** is a small CLI that reads a JSON file and prints **`submit`** output.
 
 More detail: **[`collectors/README.md`](./collectors/README.md)** (MVP notes, ports), **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** (folder layout, flow diagrams).
 
@@ -54,18 +91,21 @@ Additional tests: [`collectors/normalization/normalize.test.ts`](./collectors/no
 ## Docs (reference)
 
 - **[`../RUNTIME-TEMPLATE.md`](../RUNTIME-TEMPLATE.md)** — cross-language `collectors/` + `adapters/` template.
+- **[`specifications/summary/OGT-TYPESCRIPT-PACKAGE-COMPLETION-SUMMARY.md`](../../specifications/summary/OGT-TYPESCRIPT-PACKAGE-COMPLETION-SUMMARY.md)** — npm package layout, bundled schemas, `exports`, verification.
 
 ---
 
 ## Build and test
 
-From **`runtimes/typescript`** (or via the monorepo workspace), with the full **OpenGlucoseTelemetry** checkout so **`../../spec`** and **`../../examples`** exist:
+From **`runtimes/typescript`** (or via the monorepo workspace), with the full **OpenGlucoseTelemetry** checkout so **`../../spec`** exists (used by **`pnpm run sync-schemas`**, which runs before **`tsc`**):
 
 ```bash
 pnpm install
 pnpm build
 pnpm test
 ```
+
+`sync-schemas` copies **`spec/`** into **`bundled/spec/`**; commit updated **`bundled/spec`** when schemas change.
 
 **Smoke run** (after `pnpm build`), from this directory:
 

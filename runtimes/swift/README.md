@@ -48,6 +48,7 @@ Additional regression tests: [`OGTCollectorPipelineTests.swift`](./Tests/OpenGlu
 ## Docs (reference)
 
 - **[`../RUNTIME-TEMPLATE.md`](../RUNTIME-TEMPLATE.md)** — cross-language `collectors/` + `adapters/` template.
+- **[`specifications/summary/OGT-SWIFT-PACKAGE-COMPLETION-SUMMARY.md`](../../specifications/summary/OGT-SWIFT-PACKAGE-COMPLETION-SUMMARY.md)** — SPM layout, public API checklist, and verification notes.
 
 ---
 
@@ -62,10 +63,82 @@ swift test
 
 **Runnable example** (collector + default adapters on a sample envelope): see **[`examples/README.md`](./examples/README.md)** — `swift run RunPipelineExample` (optional path to envelope JSON).
 
-Add a **local package** dependency pointing at `runtimes/swift` from an app or framework.
+For step-by-step app integration (including **GlucoseAITracker**), see **[Integrating into an app](#integrating-into-an-app-e-g-glucoseaitracker)** below.
+
+---
+
+## Integrating into an app (e.g. GlucoseAITracker)
+
+The library is a normal **Swift Package** product: **`OpenGlucoseTelemetryRuntime`**. This section describes adding it to an **Xcode** app that lives alongside or separately from this repo.
+
+### 1. Add the package in Xcode
+
+**Option A — local path (monorepo / same machine)**  
+
+1. Open your app project (e.g. `GlucoseAITracker.xcodeproj`).  
+2. **File → Add Package Dependencies…**  
+3. Click **Add Local…** and select this directory (the folder that contains **`Package.swift`**):
+
+   `OpenGlucoseTelemetry/runtimes/swift`
+
+   From a sibling checkout, the relative path is often `../OpenGlucoseTelemetry/runtimes/swift`.
+
+**Option B — Git remote**  
+
+1. **File → Add Package Dependencies…** → enter the **OpenGlucoseTelemetry** repository URL.  
+2. Choose a **branch** or **version** rule.  
+3. Because **`Package.swift`** is not at the repository root, set the **package / subpath** (wording varies by Xcode version) to:
+
+   `runtimes/swift`
+
+   If Xcode does not offer a subpath field, clone locally and use **Option A**, or add a root `Package.swift` in the repo that wraps this package (not provided here).
+
+### 2. Link the product to targets
+
+In the package dependency sheet, add **`OpenGlucoseTelemetryRuntime`** to every target that should compile against it, for example:
+
+- **iOS app** target  
+- **watchOS app** target (if the watch extension runs the same ingestion pipeline)
+
+Confirm under the target’s **General** tab (or **Frameworks, Libraries, and Embedded Content**) that **`OpenGlucoseTelemetryRuntime`** appears for that target.
+
+### 3. Import and call the pipeline
+
+```swift
+import OpenGlucoseTelemetryRuntime
+
+// Decode wire JSON or build OGTIngestionEnvelope in memory.
+let envelope: OGTIngestionEnvelope = try OGTIngestionEnvelope.decode(from: jsonData)
+
+let pipeline: OGTReferenceCollector = OGTReferenceCollector()
+let result: OGTPipelineResult = pipeline.submit(envelope: envelope)
+
+switch result {
+case .success(let reading):
+    // OGTCanonicalGlucoseReadingV1 — map into your app / Core Data models.
+    _ = reading
+case .failure(let error):
+    // OGTStructuredPipelineError (code, traceId, message, optional field)
+    _ = error
+}
+```
+
+**Alternatives:** call **`OGTCollectorEngine.run(envelope:options:)`** directly, or pass **`OGTSubmitOptions`** for a custom **`OGTAdapterRegistry`** or **`OGTDedupeTracker`**. See **[Example tests](#example-tests-walking-through-usage)** and **`collectors/README.md`**.
+
+### 4. Platform requirements
+
+This package declares **iOS 17**, **macOS 14**, and **watchOS 10** minimums in **`Package.swift`**. App targets must meet those deployment targets (or you must lower the package’s platform versions in a fork).
+
+### 5. How this relates to app-specific code
+
+The package does **not** import your app. Your app is responsible for:
+
+1. Building **`OGTIngestionEnvelope`** (e.g. from HealthKit samples, Dexcom exports, or tests) in the JSON shape defined by **`spec/ingestion-envelope.schema.json`**.  
+2. Running **`OGTReferenceCollector`** (or **`OGTCollectorEngine`**) and handling **`OGTPipelineResult`**.  
+3. Mapping **`OGTCanonicalGlucoseReadingV1`** into your domain models (e.g. existing in-app **`OGTGlucoseIngestPipeline`**-style helpers can wrap or converge with this over time).
 
 ---
 
 ## Relationship to GlucoseAITracker
 
-Add **`OpenGlucoseTelemetryRuntime`** as a dependency, serialize HealthKit (or other) reads into an **`OGTIngestionEnvelope`**, then call **`OGTReferenceCollector().submit(envelope:)`** and switch on **`OGTPipelineResult`**. Shared logic can replace or wrap in-app pipeline types (`OGTGlucoseIngestPipeline`, etc.) over time.
+**GlucoseAITracker** can depend on **`OpenGlucoseTelemetryRuntime`** as above: serialize sources into an **`OGTIngestionEnvelope`**, call **`OGTReferenceCollector().submit(envelope:)`**, and branch on **`OGTPipelineResult`**. In-app pipeline types can gradually align with or delegate to the shared runtime.

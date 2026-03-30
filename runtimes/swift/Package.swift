@@ -1,11 +1,12 @@
 // swift-tools-version: 5.10
 import PackageDescription
 
-let package = Package(
+let package: Package = Package(
     name: "OpenGlucoseTelemetryRuntime",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v16),
+        .iOS(.v17),
+        .macOS(.v14),
+        .watchOS(.v10),
     ],
     products: [
         .library(

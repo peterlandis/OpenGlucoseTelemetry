@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openglucose.org/schemas/ogt/ingestion-envelope.v0_1.json",
+  "title": "OGT ingestion envelope",
+  "description": "Wrapper for adapter submissions (OGT MVP v0.1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "payload", "received_at", "trace_id", "adapter"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable adapter channel id (e.g. healthkit, mock)."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Opaque-to-schema JSON; validated per `source` by OGT."
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When OGT received the submission (RFC 3339)."
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Correlation id for logs and tests."
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
