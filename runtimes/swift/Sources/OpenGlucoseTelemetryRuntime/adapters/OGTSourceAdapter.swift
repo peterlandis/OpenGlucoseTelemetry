@@ -8,5 +8,5 @@ public protocol OGTSourceAdapter: Sendable {
     static var sourceId: String { get }
 
     /// Map vendor `payload` JSON into OGIS-shaped `glucose.reading` fields (before collector normalization).
-    func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV01
+    func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1
 }

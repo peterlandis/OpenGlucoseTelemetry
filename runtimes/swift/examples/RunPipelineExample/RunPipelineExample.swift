@@ -1,7 +1,7 @@
 import Foundation
 import OpenGlucoseTelemetryRuntime
 
-/// Small CLI: decode an ingestion envelope JSON, run `OGTReferenceCollectorPipeline`, print canonical JSON or a structured error.
+/// Small CLI: decode an ingestion envelope JSON, run `OGTReferenceCollector`, print canonical JSON or a structured error.
 @main
 private enum RunPipelineExample {
     static func main() {
@@ -41,8 +41,8 @@ private enum RunPipelineExample {
             exit(2)
         }
 
-        let pipeline: OGTReferenceCollectorPipeline = OGTReferenceCollectorPipeline()
-        let result: OGTPipelineSubmitResult = pipeline.submit(envelope: envelope)
+        let pipeline: OGTReferenceCollector = OGTReferenceCollector()
+        let result: OGTPipelineResult = pipeline.submit(envelope: envelope)
 
         switch result {
         case .success(let reading):

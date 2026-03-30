@@ -20,7 +20,7 @@ The Open Glucose Telemetry repository now includes a **portable TypeScript MVP p
 
 | Path | Purpose |
 |------|---------|
-| `runtimes/typescript/collectors/` | `submit()` pipeline, normalization, semantic rules, Ajv validators, optional `DedupeTracker`, Vitest tests |
+| `runtimes/typescript/collectors/` | `core/collector-engine.ts` (`submit`), `registry/ingest-plugins`, `validation/schema-validators`, `normalization`, Vitest tests |
 | `runtimes/typescript/adapters/healthkit/`, `runtimes/typescript/adapters/dexcom/`, `runtimes/typescript/adapters/mock/` | Source mappers + field mapping docs |
 | `spec/ingestion-envelope.schema.json` | Normative ingestion envelope (Draft 2020-12) |
 | `spec/healthkit-payload.schema.json` | Serializable HK glucose sample shape |

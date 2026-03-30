@@ -5,7 +5,7 @@
 Demonstrates the **collector + adapters** path:
 
 1. Load an **ingestion envelope** JSON (same shape as `spec/ingestion-envelope.schema.json`).
-2. Call **`OGTReferenceCollectorPipeline().submit(envelope:)`**.
+2. Call **`OGTReferenceCollector().submit(envelope:)`**.
 3. Print **pretty-printed canonical** `glucose.reading` JSON on success, or **structured error** fields on stderr on failure.
 
 ### How to run

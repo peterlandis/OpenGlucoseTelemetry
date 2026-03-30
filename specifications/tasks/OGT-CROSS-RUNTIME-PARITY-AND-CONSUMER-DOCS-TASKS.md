@@ -12,7 +12,7 @@ Companion to [OGT-CROSS-RUNTIME-PARITY-AND-CONSUMER-DOCS-PLAN.md](../plans/OGT-C
 - [x] **OGT-PAR-P-02** Document **event_type** / **event_version** enforcement (`runtimes/typescript/collectors/` + schema validation vs Swift `OGTGlucoseIngestPipeline`).
 - [x] **OGT-PAR-P-03** Document **empty** `subject_id`, `raw_event_id`, `source_system`, `adapter_version` handling.
 - [x] **OGT-PAR-P-04** Document **value > 0** and **20–600 mg/dL equivalent** rules (including mmol/L path).
-- [x] **OGT-PAR-P-05** Document **future timestamp** policy: `FUTURE_SKEW_MS` in `runtimes/typescript/collectors/semantic.ts` vs Swift (currently may be absent).
+- [x] **OGT-PAR-P-05** Document **future timestamp** policy: `FUTURE_SKEW_MS` in `runtimes/typescript/collectors/validation/semantic.ts` vs Swift (currently may be absent).
 - [x] **OGT-PAR-P-06** Document **mmol/L ↔ mg/dL** factor: TS `MGDL_PER_MMOL` (18.018) vs Swift (`18.0` today) vs OGIS `unit-semantics.md`.
 
 ---

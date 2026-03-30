@@ -2,8 +2,8 @@ import Foundation
 
 // MARK: - OGIS glucose.reading v0.1 (canonical wire shape)
 
-/// Canonical glucose reading aligned with `spec/pinned/glucose.reading.v0_1.json` and TypeScript `CanonicalGlucoseReadingV01`.
-public struct OGTCanonicalGlucoseReadingV01: Codable, Sendable, Equatable {
+/// Canonical glucose reading aligned with `spec/pinned/glucose.reading.v0_1.json` and TypeScript `CanonicalGlucoseReadingV01` (Swift type name **`OGTCanonicalGlucoseReadingV1`**).
+public struct OGTCanonicalGlucoseReadingV1: Codable, Sendable, Equatable {
     public var eventType: String
     public var eventVersion: String
     public var subjectId: String
@@ -124,7 +124,7 @@ public struct OGTCanonicalQuality: Codable, Sendable, Equatable {
     }
 }
 
-public extension OGTCanonicalGlucoseReadingV01 {
+public extension OGTCanonicalGlucoseReadingV1 {
     /// Encodes to JSON `Data` with snake_case keys (OGIS wire shape).
     func encodeToCanonicalJSONData() throws -> Data {
         let encoder: JSONEncoder = JSONEncoder()

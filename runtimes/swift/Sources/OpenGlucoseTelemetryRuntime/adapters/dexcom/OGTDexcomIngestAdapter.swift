@@ -9,7 +9,7 @@ public struct OGTDexcomIngestAdapter: OGTSourceAdapter, Sendable {
 
     public init() {}
 
-    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV01 {
+    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 {
         try Self.mapPayloadToCanonical(payload, envelope: envelope)
     }
 
@@ -37,7 +37,7 @@ public struct OGTDexcomIngestAdapter: OGTSourceAdapter, Sendable {
     public static func mapPayloadToCanonical(
         _ payload: OGTJSONValue,
         envelope: OGTIngestionEnvelope
-    ) throws -> OGTCanonicalGlucoseReadingV01 {
+    ) throws -> OGTCanonicalGlucoseReadingV1 {
         let object: [String: OGTJSONValue] = try ogtRequireObject(payload)
         let eventId: String = try ogtRequireString(object, key: "event_id")
         let subjectId: String = try ogtRequireString(object, key: "subject_id")
@@ -60,7 +60,7 @@ public struct OGTDexcomIngestAdapter: OGTSourceAdapter, Sendable {
 
         let direction: String = mapDexcomTrendArrowToDirection(arrow: trendArrow)
 
-        var reading: OGTCanonicalGlucoseReadingV01 = OGTCanonicalGlucoseReadingV01(
+        var reading: OGTCanonicalGlucoseReadingV1 = OGTCanonicalGlucoseReadingV1(
             eventType: "glucose.reading",
             eventVersion: "0.1",
             subjectId: subjectId,
@@ -115,4 +115,19 @@ public struct OGTDexcomIngestAdapter: OGTSourceAdapter, Sendable {
 
         return reading
     }
+}
+
+// MARK: - Pipeline registration
+
+public extension OGTDexcomIngestAdapter {
+    /// Pluggable registration for [`OGTDefaultAdapterRegistry`](../../collectors/OGTAdapterRegistry.swift).
+    static let ogtRegistration: OGTAdapterRegistration = OGTAdapterRegistration(
+        sourceId: OGTDexcomIngestAdapter.sourceId,
+        validatePayload: { (payload: OGTJSONValue) throws -> Void in
+            try ogtValidateDexcomPayload(payload)
+        },
+        mapPayload: { (payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 in
+            try OGTDexcomIngestAdapter().mapPayload(payload, envelope: envelope)
+        }
+    )
 }

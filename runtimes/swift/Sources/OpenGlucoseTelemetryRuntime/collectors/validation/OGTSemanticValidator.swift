@@ -9,7 +9,7 @@ private let mgdlMin: Double = 20
 private let mgdlMax: Double = 600
 
 public func ogtApplySemanticRules(
-    reading: OGTCanonicalGlucoseReadingV01,
+    reading: OGTCanonicalGlucoseReadingV1,
     traceId: String
 ) -> OGTStructuredPipelineError? {
     let nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000.0)

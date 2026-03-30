@@ -5,21 +5,32 @@ This package mirrors the TypeScript layout under `runtimes/typescript/`:
 ```text
 Sources/OpenGlucoseTelemetryRuntime/
 ├── collectors/
-│   ├── OGTCollectorPipeline.swift           # Protocol + OGTReferenceCollectorPipeline
-│   ├── OGTCollectorSubmit.swift             # Full submit() parity (validate → map → normalize → …)
-│   ├── OGTAdapterRegistry.swift             # Dispatch by source → adapter
-│   ├── OGTIngestionEnvelope.swift           # Wire envelope + decode/encode
-│   ├── OGTIngestionTypes.swift              # OGTPipelineError (unknown source)
-│   ├── OGTJSONValue.swift                   # Dynamic JSON for payloads
-│   ├── OGTCanonicalGlucoseReadingV01.swift  # OGIS-shaped canonical model
-│   ├── OGTPipelineResult.swift              # OGTPipelineSubmitResult, structured errors
-│   ├── OGTEnvelopeAndPayloadValidation.swift
-│   ├── OGTNormalize.swift
-│   ├── OGTSemantic.swift
-│   ├── OGTGlucoseReadingSchemaValidator.swift
-│   ├── OGTJSONValueExtractors.swift
-│   ├── OGTDedupeTracker.swift / OGTSubmitOptions
-│   ├── OGTRepositoryRoot.swift
+│   ├── core/
+│   │   ├── OGTCollectorPipeline.swift         # Protocol + OGTReferenceCollector
+│   │   ├── OGTCollectorEngine.swift           # submit: registry validate + map (no per-source switch)
+│   │   ├── OGTSubmitOptions.swift
+│   │   ├── OGTPipelineResult.swift            # OGTPipelineResult, OGTStructuredPipelineError
+│   ├── ingestion/
+│   │   ├── OGTIngestionEnvelope.swift
+│   │   ├── OGTEnvelopeValidator.swift         # envelope + per-source payload validators
+│   │   ├── OGTIngestionTypes.swift            # OGTPipelineError (unknown source)
+│   ├── registry/
+│   │   ├── OGTAdapterRegistration.swift
+│   │   ├── OGTAdapterCatalog.swift
+│   │   ├── OGTAdapterRegistry.swift
+│   ├── canonical/
+│   │   ├── OGTCanonicalGlucoseReadingV1.swift
+│   ├── validation/
+│   │   ├── OGTGlucoseReadingSchemaValidator.swift
+│   │   ├── OGTSemanticValidator.swift
+│   ├── normalization/
+│   │   ├── OGTNormalizer.swift
+│   │   ├── OGTDedupeTracker.swift
+│   ├── json/
+│   │   ├── OGTJSONValue.swift
+│   │   ├── OGTJSONValueExtractors.swift
+│   ├── tooling/
+│   │   ├── OGTRepositoryRoot.swift
 │   └── README.md
 └── adapters/
     ├── OGTSourceAdapter.swift
@@ -31,7 +42,7 @@ Sources/OpenGlucoseTelemetryRuntime/
 
 ## Runtime flow
 
-The Swift runtime mirrors TypeScript **`pipeline.ts`** `submit`: decode (or build) an **`OGTIngestionEnvelope`**, run **`OGTReferenceCollectorPipeline.submit`**, get **`OGTPipelineSubmitResult`**. Below, **each diagram is intentionally small** so previews stay readable; read them top to bottom.
+The Swift runtime mirrors TypeScript **`pipeline.ts`** `submit`: decode (or build) an **`OGTIngestionEnvelope`**, run **`OGTReferenceCollector.submit`**, get **`OGTPipelineResult`**. Below, **each diagram is intentionally small** so previews stay readable; read them top to bottom.
 
 **Tooling only (not on this path):** **`OGTRepositoryRoot`** finds the repo `spec/` tree for tests and CLI-style tools.
 
@@ -39,7 +50,7 @@ The Swift runtime mirrors TypeScript **`pipeline.ts`** `submit`: decode (or buil
 
 ### 1. Bird’s-eye view
 
-**What this layer does:** Frames the **whole runtime** as a straight line from “bytes on the wire” to “one canonical glucose reading or a structured error.” It does not name every function; it shows **where responsibility shifts**: your app or transport owns wire JSON; the library owns validation, mapping, and OGIS-aligned output; the outcome is always a single **`OGTPipelineSubmitResult`**. Use this strip when explaining the system to someone new before drilling into §2–§8.
+**What this layer does:** Frames the **whole runtime** as a straight line from “bytes on the wire” to “one canonical glucose reading or a structured error.” It does not name every function; it shows **where responsibility shifts**: your app or transport owns wire JSON; the library owns validation, mapping, and OGIS-aligned output; the outcome is always a single **`OGTPipelineResult`**. Use this strip when explaining the system to someone new before drilling into §2–§8.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '22px'}}}%%
@@ -73,14 +84,14 @@ You can also construct **`OGTIngestionEnvelope`** in memory (e.g. from HealthKit
 
 ### 3. Pipeline entry
 
-**What this layer does:** Defines the **public API** you call from production or tests. **`OGTCollectorPipeline`** is the abstraction (useful for mocks); **`OGTReferenceCollectorPipeline`** is the real implementation and forwards to **`OGTCollectorSubmit.run`**, where all stages live. This layer **does not** validate or map yet—it only **hands off** the envelope and **`OGTSubmitOptions`**. Options let you plug in a **test registry** (`adapterRegistry`) or **dedupe** (`dedupeTracker`) without changing call sites.
+**What this layer does:** Defines the **public API** you call from production or tests. **`OGTCollectorPipeline`** is the abstraction (useful for mocks); **`OGTReferenceCollector`** is the real implementation and forwards to **`OGTCollectorEngine.run`**, where all stages live. This layer **does not** validate or map yet—it only **hands off** the envelope and **`OGTSubmitOptions`**. Options let you plug in a **test registry** (`adapterRegistry`) or **dedupe** (`dedupeTracker`) without changing call sites.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TB
   E[OGTIngestionEnvelope]
-  P["OGTReferenceCollectorPipeline.submit(envelope:options:)"]
-  R[OGTCollectorSubmit.run]
+  P["OGTReferenceCollector.submit(envelope:options:)"]
+  R[OGTCollectorEngine.run]
   E --> P
   P --> R
 ```
@@ -96,7 +107,7 @@ flowchart TB
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '18px'}}}%%
 flowchart TB
-  R[After OGTCollectorSubmit.run starts]
+  R[After OGTCollectorEngine.run starts]
   V1[ogtValidateIngestionEnvelope]
   V2[Per-source payload validate]
   R --> V1
@@ -107,29 +118,29 @@ Payload validators (by **`envelope.source`**):
 
 | `source`   | Function                      |
 |-----------|-------------------------------|
-| `healthkit` | `ogtValidateHealthKitPayload` |
-| `mock`      | `ogtValidateMockPayload`      |
-| `dexcom`    | `ogtValidateDexcomPayload`    |
+| `healthkit` | `ogtValidateHealthKitPayload` (via **`OGTAdapterRegistration`**) |
+| `mock`      | `ogtValidateMockPayload`       |
+| `dexcom`    | `ogtValidateDexcomPayload`     |
 
-Unknown `source` → failure **`ADAPTER_UNKNOWN`** (during payload routing, before **`mapPayload`**).
+Validators are wired in each adapter’s **`ogtRegistration`**, not in **`OGTCollectorEngine`**. Unknown `source` → failure **`ADAPTER_UNKNOWN`**.
 
 ---
 
 ### 5. Adapter dispatch → pre-normalize canonical
 
-**What this layer does:** Maps **vendor-shaped** **`payload`** into the shared **canonical glucose reading** model (**`OGTCanonicalGlucoseReadingV01`**), still **before** unit normalization and timestamp canonicalization. **`OGTAdapterRegistry`** picks **exactly one** **`OGTSourceAdapter`** from **`envelope.source`**; each adapter encodes how HealthKit JSON, Dexcom JSON, or mock JSON maps to **`event_type`**, **`subject_id`**, **`observed_at`**, **`provenance`**, **`device`**, etc. Mapping errors (missing keys, wrong types) return **`PAYLOAD_INVALID`**. This layer is where **source-specific semantics** live; everything after it is **source-agnostic**.
+**What this layer does:** Maps **vendor-shaped** **`payload`** into the shared **canonical glucose reading** model (**`OGTCanonicalGlucoseReadingV1`**), still **before** unit normalization and timestamp canonicalization. **`OGTDefaultAdapterRegistry`** looks up **`OGTAdapterRegistration`** by **`envelope.source`** (from **`OGTAdapterCatalog.builtinRegistrations`**); each registration’s **map** calls the corresponding **`OGTSourceAdapter`**. Mapping errors (missing keys, wrong types) return **`PAYLOAD_INVALID`**. Source-specific semantics live in **adapters + registrations**; **`OGTCollectorEngine`** has no per-source **`switch`**.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TB
-  Reg["OGTAdapterRegistry.mapPayload"]
-  One["Exactly one OGTSourceAdapter\n(healthkit · dexcom · mock)"]
-  C["OGTCanonicalGlucoseReadingV01\npre-normalize"]
+  Reg["Registry mapPayload\n(table lookup)"]
+  One["OGTAdapterRegistration\nfor source"]
+  C["OGTCanonicalGlucoseReadingV1\npre-normalize"]
   Reg --> One
   One --> C
 ```
 
-Implementations: **`OGTHealthKitIngestAdapter`**, **`OGTDexcomIngestAdapter`**, **`OGTMockIngestAdapter`** (see `adapters/`).
+Implementations: **`OGTHealthKitIngestAdapter`**, **`OGTDexcomIngestAdapter`**, **`OGTMockIngestAdapter`** (see `adapters/`), each with **`ogtRegistration`**.
 
 ---
 
@@ -145,7 +156,7 @@ flowchart TB
   S[ogtApplySemanticRules]
   D[Optional OGTDedupeTracker]
   G[ogtValidateGlucoseReadingOgis]
-  OK[OGTPipelineSubmitResult.success]
+  OK[OGTPipelineResult.success]
   C --> N
   N --> S
   S --> D
@@ -175,13 +186,13 @@ If **`dedupeTracker`** is `nil`, the dedupe step is skipped (no key stored).
 
 ### 8. Result types
 
-**What this layer does:** Collapses the whole pipeline into an **explicit sum type**: either a **normalized canonical reading** or a **structured error**. **`OGTPipelineSubmitResult`** avoids throwing across the public boundary—callers **`switch`** on **`.success`** / **`.failure`**. On success, **`OGTCanonicalGlucoseReadingV01`** is ready for encoding or handoff to your domain layer. On failure, **`OGTStructuredPipelineError`** carries everything needed for logging and correlation without losing the **`traceId`**.
+**What this layer does:** Collapses the whole pipeline into an **explicit sum type**: either a **normalized canonical reading** or a **structured error**. **`OGTPipelineResult`** avoids throwing across the public boundary—callers **`switch`** on **`.success`** / **`.failure`**. On success, **`OGTCanonicalGlucoseReadingV1`** is ready for encoding or handoff to your domain layer. On failure, **`OGTStructuredPipelineError`** carries everything needed for logging and correlation without losing the **`traceId`**.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TB
-  R[OGTPipelineSubmitResult]
-  S[.success — OGTCanonicalGlucoseReadingV01]
+  R[OGTPipelineResult]
+  S[.success — OGTCanonicalGlucoseReadingV1]
   F[.failure — OGTStructuredPipelineError]
   R --> S
   R --> F
@@ -192,17 +203,17 @@ flowchart TB
 ### Pipeline order (text checklist)
 
 1. Decode or build **`OGTIngestionEnvelope`**.  
-2. **`OGTReferenceCollectorPipeline().submit(envelope:options:)`**.  
-3. Validate envelope → validate payload for `source`.  
-4. **`mapPayload`** via registry → **`OGTCanonicalGlucoseReadingV01`**.  
+2. **`OGTReferenceCollector().submit(envelope:options:)`**.  
+3. Validate envelope → **`registry.validatePayload`** for `source`.  
+4. **`registry.mapPayload`** → **`OGTCanonicalGlucoseReadingV1`**.  
 5. Normalize → semantic rules → optional dedupe → **`ogtValidateGlucoseReadingOgis`**.  
 6. Return **`.success(reading)`** or **`.failure(error)`**.
 
 ## Extension points
 
-1. **Adapters:** implement **`OGTSourceAdapter.mapPayload`** to match each `map.ts` and return **`OGTCanonicalGlucoseReadingV01`** (pre-normalization fields; the collector normalizes and validates).
-2. **Registry:** extend **`OGTDefaultAdapterRegistry`** (or inject **`any OGTAdapterRegistry`** via **`OGTSubmitOptions.adapterRegistry`**) for new `source` ids; add matching **`ogtValidate*Payload`** in **`OGTCollectorSubmit`** / **`OGTEnvelopeAndPayloadValidation.swift`**.
-3. **Apps (e.g. GlucoseAITracker):** build or decode an **`OGTIngestionEnvelope`**, then call **`OGTReferenceCollectorPipeline().submit(envelope:options:)`** and handle **`OGTPipelineSubmitResult`**.
+1. **Adapters:** implement **`OGTSourceAdapter.mapPayload`** to match each `map.ts` and return **`OGTCanonicalGlucoseReadingV1`** (pre-normalization fields; the collector normalizes and validates).
+2. **Registry:** add **`ogtValidate*Payload`** in **`collectors/ingestion/OGTEnvelopeValidator.swift`**, **`static let ogtRegistration`** on the adapter, and append to **`OGTAdapterCatalog.builtinRegistrations`** (or inject **`OGTDefaultAdapterRegistry(registrations:)`** / custom **`OGTAdapterRegistry`** via **`OGTSubmitOptions.adapterRegistry`**).
+3. **Apps (e.g. GlucoseAITracker):** build or decode an **`OGTIngestionEnvelope`**, then call **`OGTReferenceCollector().submit(envelope:options:)`** and handle **`OGTPipelineResult`**.
 
 ## Template
 

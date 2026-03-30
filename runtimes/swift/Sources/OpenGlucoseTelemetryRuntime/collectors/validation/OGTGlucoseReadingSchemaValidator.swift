@@ -2,7 +2,7 @@ import Foundation
 
 /// Manual validation against `spec/pinned/glucose.reading.v0_1.json` (Ajv parity for MVP fields).
 /// Returns a human-readable message, or `nil` if valid.
-public func ogtValidateGlucoseReadingOgis(_ reading: OGTCanonicalGlucoseReadingV01) -> String? {
+public func ogtValidateGlucoseReadingOgis(_ reading: OGTCanonicalGlucoseReadingV1) -> String? {
     if reading.eventType != "glucose.reading" {
         return "/event_type: must be const glucose.reading"
     }

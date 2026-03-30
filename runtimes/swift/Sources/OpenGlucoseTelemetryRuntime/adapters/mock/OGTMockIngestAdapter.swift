@@ -9,21 +9,21 @@ public struct OGTMockIngestAdapter: OGTSourceAdapter, Sendable {
 
     public init() {}
 
-    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV01 {
+    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 {
         try Self.mapPayloadToCanonical(payload, envelope: envelope)
     }
 
     public static func mapPayloadToCanonical(
         _ payload: OGTJSONValue,
         envelope: OGTIngestionEnvelope
-    ) throws -> OGTCanonicalGlucoseReadingV01 {
+    ) throws -> OGTCanonicalGlucoseReadingV1 {
         let object: [String: OGTJSONValue] = try ogtRequireObject(payload)
         let subjectId: String = try ogtRequireString(object, key: "subject_id")
         let value: Double = try ogtRequireNumber(object, key: "value")
         let unit: String = try ogtRequireString(object, key: "unit")
         let observedAt: String = try ogtRequireString(object, key: "observed_at")
 
-        return OGTCanonicalGlucoseReadingV01(
+        return OGTCanonicalGlucoseReadingV1(
             eventType: "glucose.reading",
             eventVersion: "0.1",
             subjectId: subjectId,
@@ -48,4 +48,19 @@ public struct OGTMockIngestAdapter: OGTSourceAdapter, Sendable {
             quality: nil
         )
     }
+}
+
+// MARK: - Pipeline registration
+
+public extension OGTMockIngestAdapter {
+    /// Pluggable registration for [`OGTDefaultAdapterRegistry`](../../collectors/OGTAdapterRegistry.swift).
+    static let ogtRegistration: OGTAdapterRegistration = OGTAdapterRegistration(
+        sourceId: OGTMockIngestAdapter.sourceId,
+        validatePayload: { (payload: OGTJSONValue) throws -> Void in
+            try ogtValidateMockPayload(payload)
+        },
+        mapPayload: { (payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 in
+            try OGTMockIngestAdapter().mapPayload(payload, envelope: envelope)
+        }
+    )
 }

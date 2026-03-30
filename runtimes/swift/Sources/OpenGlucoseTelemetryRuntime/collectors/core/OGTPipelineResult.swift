@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Structured errors (parity with TS collectors/errors.ts)
+// MARK: - Structured errors (parity with TS collectors/core/pipeline-result.ts)
 
 public enum OGTPipelineIssueCode: String, Sendable, Codable {
     case envelopeInvalid = "ENVELOPE_INVALID"
@@ -34,11 +34,11 @@ extension OGTStructuredPipelineError: LocalizedError {
 
 // MARK: - Submit result (parity with TS PipelineResult)
 
-public enum OGTPipelineSubmitResult: Sendable, Equatable {
-    case success(OGTCanonicalGlucoseReadingV01)
+public enum OGTPipelineResult: Sendable, Equatable {
+    case success(OGTCanonicalGlucoseReadingV1)
     case failure(OGTStructuredPipelineError)
 
-    public var reading: OGTCanonicalGlucoseReadingV01? {
+    public var reading: OGTCanonicalGlucoseReadingV1? {
         if case .success(let r) = self {
             return r
         }

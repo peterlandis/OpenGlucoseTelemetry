@@ -1,25 +1,32 @@
 import XCTest
 @testable import OpenGlucoseTelemetryRuntime
 
-/// Examples for wiring **collectors** (`OGTReferenceCollectorPipeline`) and **adapters** (`OGTAdapterRegistry` + `adapters/*`).
+/// Examples for wiring **collectors** (`OGTReferenceCollector`) and **adapters** (`OGTAdapterRegistry` + `adapters/*`).
 ///
-/// **Flow:** Decode JSON → `OGTIngestionEnvelope` → `OGTCollectorPipeline.submit` → validate → registry `mapPayload` → normalize → semantic → optional dedupe → OGIS check → `OGTPipelineSubmitResult`.
+/// **Flow:** Decode JSON → `OGTIngestionEnvelope` → `OGTCollectorPipeline.submit` → validate → registry `mapPayload` → normalize → semantic → optional dedupe → OGIS check → `OGTPipelineResult`.
 
 final class OGTCollectorAndAdapterExampleTests: XCTestCase {
     // MARK: - Example 1: Inject a stub registry via `OGTSubmitOptions` (unit-test pattern)
 
     /// Minimal registry that maps only `mock` to a fixed canonical reading (bypasses real `OGTMockIngestAdapter` mapping).
     private struct ExampleStubRegistry: OGTAdapterRegistry, Sendable {
+        func validatePayload(for source: String, payload: OGTJSONValue) throws {
+            guard source == OGTMockIngestAdapter.sourceId else {
+                throw OGTPipelineError.unknownSource(source)
+            }
+            try ogtValidateMockPayload(payload)
+        }
+
         func mapPayload(
             for source: String,
             payload: OGTJSONValue,
             envelope: OGTIngestionEnvelope
-        ) throws -> OGTCanonicalGlucoseReadingV01 {
+        ) throws -> OGTCanonicalGlucoseReadingV1 {
             guard source == OGTMockIngestAdapter.sourceId else {
                 throw OGTPipelineError.unknownSource(source)
             }
             _ = payload
-            return OGTCanonicalGlucoseReadingV01(
+            return OGTCanonicalGlucoseReadingV1(
                 eventType: "glucose.reading",
                 eventVersion: "0.1",
                 subjectId: "stub-subject",
@@ -60,8 +67,8 @@ final class OGTCollectorAndAdapterExampleTests: XCTestCase {
         let data: Data = Data(json.utf8)
         let envelope: OGTIngestionEnvelope = try OGTIngestionEnvelope.decode(from: data)
 
-        let pipeline: OGTCollectorPipeline = OGTReferenceCollectorPipeline()
-        let result: OGTPipelineSubmitResult = pipeline.submit(
+        let pipeline: OGTCollectorPipeline = OGTReferenceCollector()
+        let result: OGTPipelineResult = pipeline.submit(
             envelope: envelope,
             options: OGTSubmitOptions(adapterRegistry: ExampleStubRegistry())
         )
@@ -83,10 +90,10 @@ final class OGTCollectorAndAdapterExampleTests: XCTestCase {
         let data: Data = try Data(contentsOf: sampleURL)
         let envelope: OGTIngestionEnvelope = try OGTIngestionEnvelope.decode(from: data)
 
-        let pipeline: OGTReferenceCollectorPipeline = OGTReferenceCollectorPipeline()
+        let pipeline: OGTReferenceCollector = OGTReferenceCollector()
         XCTAssertEqual(envelope.source, OGTHealthKitIngestAdapter.sourceId)
 
-        let result: OGTPipelineSubmitResult = pipeline.submit(envelope: envelope)
+        let result: OGTPipelineResult = pipeline.submit(envelope: envelope)
         guard case .success(let reading) = result else {
             XCTFail("Expected success, got \(String(describing: result))")
             return
@@ -109,8 +116,8 @@ final class OGTCollectorAndAdapterExampleTests: XCTestCase {
         """
         let envelope: OGTIngestionEnvelope = try OGTIngestionEnvelope.decode(from: Data(json.utf8))
 
-        let collector: OGTCollectorPipeline = OGTReferenceCollectorPipeline()
-        let result: OGTPipelineSubmitResult = collector.submit(envelope: envelope)
+        let collector: OGTCollectorPipeline = OGTReferenceCollector()
+        let result: OGTPipelineResult = collector.submit(envelope: envelope)
         guard case .success(let out) = result else {
             XCTFail("Expected success, got \(String(describing: result))")
             return

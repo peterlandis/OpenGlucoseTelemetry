@@ -18,7 +18,7 @@ public struct OGTAdapterWireMetadata: Codable, Sendable {
 
 /// OGT **ingestion envelope** — the wrapper around a vendor `payload` that the collector ingests.
 ///
-/// This is the JSON shape defined by **`spec/ingestion-envelope.schema.json`** (OGT MVP v0.1) and mirrored in TypeScript as `IngestionEnvelope` in `runtimes/typescript/collectors/pipeline.ts`.
+/// This is the JSON shape defined by **`spec/ingestion-envelope.schema.json`** (OGT MVP v0.1) and mirrored in TypeScript as `IngestionEnvelope` in `runtimes/typescript/collectors/ingestion/ingestion-types.ts` (re-exported from `pipeline.ts`).
 ///
 /// **Semantics (schema):**
 /// - **`source`** — Stable channel id (e.g. `healthkit`, `dexcom`, `mock`); drives adapter routing.

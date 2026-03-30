@@ -8,4 +8,4 @@ One folder per `source` id, mirroring TypeScript:
 | `dexcom` | `dexcom/` | `runtimes/typescript/adapters/dexcom/map.ts` |
 | `mock` | `mock/` | `runtimes/typescript/adapters/mock/map.ts` |
 
-Each `OGT*IngestAdapter` conforms to `OGTSourceAdapter` and implements `mapPayload(_:envelope:)` → `OGTCanonicalGlucoseReadingV01`, aligned with the corresponding TS `map.ts`.
+Each `OGT*IngestAdapter` conforms to `OGTSourceAdapter` and implements `mapPayload(_:envelope:)` → `OGTCanonicalGlucoseReadingV1`, aligned with the corresponding TS `map.ts`. Also expose **`static let ogtRegistration: OGTAdapterRegistration`** (validate + map) and register it in **`OGTAdapterCatalog.builtinRegistrations`** so the collector stays source-agnostic.

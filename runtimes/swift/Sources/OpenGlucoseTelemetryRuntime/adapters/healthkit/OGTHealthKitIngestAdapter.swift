@@ -9,14 +9,14 @@ public struct OGTHealthKitIngestAdapter: OGTSourceAdapter, Sendable {
 
     public init() {}
 
-    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV01 {
+    public func mapPayload(_ payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 {
         try Self.mapPayloadToCanonical(payload, envelope: envelope)
     }
 
     public static func mapPayloadToCanonical(
         _ payload: OGTJSONValue,
         envelope: OGTIngestionEnvelope
-    ) throws -> OGTCanonicalGlucoseReadingV01 {
+    ) throws -> OGTCanonicalGlucoseReadingV1 {
         let object: [String: OGTJSONValue] = try ogtRequireObject(payload)
         let uuid: String = try ogtRequireString(object, key: "uuid")
         let value: Double = try ogtRequireNumber(object, key: "value")
@@ -41,7 +41,7 @@ public struct OGTHealthKitIngestAdapter: OGTSourceAdapter, Sendable {
             return name
         }()
 
-        var reading: OGTCanonicalGlucoseReadingV01 = OGTCanonicalGlucoseReadingV01(
+        var reading: OGTCanonicalGlucoseReadingV1 = OGTCanonicalGlucoseReadingV1(
             eventType: "glucose.reading",
             eventVersion: "0.1",
             subjectId: subjectId,
@@ -117,4 +117,19 @@ public struct OGTHealthKitIngestAdapter: OGTSourceAdapter, Sendable {
         }
         return "app"
     }
+}
+
+// MARK: - Pipeline registration
+
+public extension OGTHealthKitIngestAdapter {
+    /// Pluggable registration for [`OGTDefaultAdapterRegistry`](../../collectors/OGTAdapterRegistry.swift).
+    static let ogtRegistration: OGTAdapterRegistration = OGTAdapterRegistration(
+        sourceId: OGTHealthKitIngestAdapter.sourceId,
+        validatePayload: { (payload: OGTJSONValue) throws -> Void in
+            try ogtValidateHealthKitPayload(payload)
+        },
+        mapPayload: { (payload: OGTJSONValue, envelope: OGTIngestionEnvelope) throws -> OGTCanonicalGlucoseReadingV1 in
+            try OGTHealthKitIngestAdapter().mapPayload(payload, envelope: envelope)
+        }
+    )
 }

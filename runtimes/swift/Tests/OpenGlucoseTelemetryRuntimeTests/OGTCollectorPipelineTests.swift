@@ -18,8 +18,8 @@ final class OGTCollectorPipelineTests: XCTestCase {
         let sampleURL: URL = root.appendingPathComponent("examples/ingestion/healthkit-sample.json", isDirectory: false)
         let data: Data = try Data(contentsOf: sampleURL)
         let envelope: OGTIngestionEnvelope = try OGTIngestionEnvelope.decode(from: data)
-        let pipeline: OGTReferenceCollectorPipeline = OGTReferenceCollectorPipeline()
-        let result: OGTPipelineSubmitResult = pipeline.submit(envelope: envelope)
+        let pipeline: OGTReferenceCollector = OGTReferenceCollector()
+        let result: OGTPipelineResult = pipeline.submit(envelope: envelope)
         guard case .success(let reading) = result else {
             XCTFail("Expected success, got \(String(describing: result))")
             return
@@ -39,8 +39,8 @@ final class OGTCollectorPipelineTests: XCTestCase {
             traceId: "trace-1",
             adapter: OGTAdapterWireMetadata(id: "ogt.adapter.unknown", version: "0.1.0")
         )
-        let pipeline: OGTReferenceCollectorPipeline = OGTReferenceCollectorPipeline()
-        let result: OGTPipelineSubmitResult = pipeline.submit(envelope: envelope)
+        let pipeline: OGTReferenceCollector = OGTReferenceCollector()
+        let result: OGTPipelineResult = pipeline.submit(envelope: envelope)
         guard case .failure(let err) = result else {
             XCTFail("Expected failure")
             return

@@ -8,9 +8,9 @@ Shared contracts (schemas, fixtures) live at the repo root: [`../../spec`](../..
 
 ## Architecture (this package)
 
-**Collectors** implement the full **ingestion pipeline** (parity with TypeScript **`pipeline.ts`** `submit`): validate envelope and per-source payload → **`OGTAdapterRegistry.mapPayload`** → normalize → semantic rules → optional dedupe → OGIS-shaped checks. The public entry is **`OGTReferenceCollectorPipeline`**, which implements **`OGTCollectorPipeline`** and delegates to **`OGTCollectorSubmit.run`**.
+**Collectors** implement the full **ingestion pipeline** (parity with TypeScript **`pipeline.ts`** `submit`): validate envelope and per-source payload → **`OGTAdapterRegistry.mapPayload`** → normalize → semantic rules → optional dedupe → OGIS-shaped checks. The public entry is **`OGTReferenceCollector`**, which implements **`OGTCollectorPipeline`** and delegates to **`OGTCollectorEngine.run`**.
 
-**Adapters** live under **`adapters/<source>/`** (`healthkit`, `dexcom`, `mock`). Each implements **`OGTSourceAdapter`** — **`mapPayload`** turns the envelope’s **`payload`** into **`OGTCanonicalGlucoseReadingV01`** before normalization. **`OGTDefaultAdapterRegistry`** dispatches the MVP sources.
+**Adapters** live under **`adapters/<source>/`** (`healthkit`, `dexcom`, `mock`). Each implements **`OGTSourceAdapter`** — **`mapPayload`** turns the envelope’s **`payload`** into **`OGTCanonicalGlucoseReadingV1`** before normalization. **`OGTDefaultAdapterRegistry`** dispatches the MVP sources.
 
 ```text
 JSON (ingestion envelope)
@@ -20,7 +20,7 @@ JSON (ingestion envelope)
   → OGTAdapterRegistry.mapPayload(for:payload:envelope:)
   → ogtNormalizeCanonicalReading, ogtApplySemanticRules, optional dedupe
   → ogtValidateGlucoseReadingOgis
-  → OGTPipelineSubmitResult (.success(reading) | .failure(structured))
+  → OGTPipelineResult (.success(reading) | .failure(structured))
 ```
 
 **Optional:** pass **`OGTSubmitOptions(adapterRegistry:)`** to inject a test or custom registry; **`dedupeTracker`** enables in-memory dedupe like the TS runtime.
@@ -39,7 +39,7 @@ The **[`Tests/OpenGlucoseTelemetryRuntimeTests/OGTCollectorAndAdapterExampleTest
 |------|----------------|
 | **`testExample_stubRegistry_collectorReturnsSuccess`** | Mock envelope JSON → **`submit(..., options: OGTSubmitOptions(adapterRegistry: ExampleStubRegistry()))`** → **`.success`** with a canonical reading (stub bypasses **`OGTMockIngestAdapter`** mapping). |
 | **`testExample_defaultRegistry_dispatchesToHealthKitAdapter`** | Repo **`examples/ingestion/healthkit-sample.json`** → default registry → real **`OGTHealthKitIngestAdapter`** → **`.success`**. |
-| **`testExample_injectCollectorPipelineProtocol`** | Depends on **`OGTCollectorPipeline`** with **`OGTReferenceCollectorPipeline`** and the default registry (real **`mock`** adapter). |
+| **`testExample_injectCollectorPipelineProtocol`** | Depends on **`OGTCollectorPipeline`** with **`OGTReferenceCollector`** and the default registry (real **`mock`** adapter). |
 
 Additional regression tests: [`OGTCollectorPipelineTests.swift`](./Tests/OpenGlucoseTelemetryRuntimeTests/OGTCollectorPipelineTests.swift), [`OGTRepositoryRootTests.swift`](./Tests/OpenGlucoseTelemetryRuntimeTests/OGTRepositoryRootTests.swift).
 
@@ -68,4 +68,4 @@ Add a **local package** dependency pointing at `runtimes/swift` from an app or f
 
 ## Relationship to GlucoseAITracker
 
-Add **`OpenGlucoseTelemetryRuntime`** as a dependency, serialize HealthKit (or other) reads into an **`OGTIngestionEnvelope`**, then call **`OGTReferenceCollectorPipeline().submit(envelope:)`** and switch on **`OGTPipelineSubmitResult`**. Shared logic can replace or wrap in-app pipeline types (`OGTGlucoseIngestPipeline`, etc.) over time.
+Add **`OpenGlucoseTelemetryRuntime`** as a dependency, serialize HealthKit (or other) reads into an **`OGTIngestionEnvelope`**, then call **`OGTReferenceCollector().submit(envelope:)`** and switch on **`OGTPipelineResult`**. Shared logic can replace or wrap in-app pipeline types (`OGTGlucoseIngestPipeline`, etc.) over time.

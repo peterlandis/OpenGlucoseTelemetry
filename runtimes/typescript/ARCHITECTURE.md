@@ -5,16 +5,28 @@ This package is the **reference** layout for other Open Glucose Telemetry runtim
 ```text
 runtimes/typescript/
 ├── collectors/
-│   ├── pipeline.ts           # submit(), finalize() — main entry
-│   ├── validators.ts         # Ajv: envelope, payloads, OGIS glucose.reading
-│   ├── normalize.ts          # CanonicalGlucoseReadingV01 normalization
-│   ├── semantic.ts           # applySemanticRules
-│   ├── dedupe.ts             # DedupeTracker
-│   ├── errors.ts             # PipelineResult, StructuredPipelineError, codes
-│   ├── paths.ts              # specPaths.repoRoot + schema paths (tests / validators)
-│   ├── schema-load.ts        # Ajv schema compilation helpers
+│   ├── pipeline.ts              # Public barrel: re-exports submit, types, DedupeTracker
+│   ├── core/
+│   │   ├── collector-engine.ts  # submit() + finalize() — main implementation
+│   │   ├── pipeline-result.ts   # PipelineResult, StructuredPipelineError, codes
+│   │   └── submit-options.ts    # SubmitOptions
+│   ├── ingestion/
+│   │   └── ingestion-types.ts   # IngestionEnvelope
+│   ├── registry/
+│   │   └── ingest-plugins.ts    # builtinIngestPlugins
+│   ├── canonical/
+│   │   └── canonical-glucose-reading.ts
+│   ├── validation/
+│   │   ├── schema-validators.ts # Ajv: envelope, payloads, OGIS glucose.reading
+│   │   └── semantic.ts          # applySemanticRules
+│   ├── normalization/
+│   │   ├── normalize.ts
+│   │   ├── dedupe.ts
+│   │   └── normalize.test.ts
+│   ├── tooling/
+│   │   ├── paths.ts             # specPaths.repoRoot (validators, tests)
+│   │   └── schema-load.ts
 │   ├── pipeline.test.ts
-│   ├── normalize.test.ts
 │   └── README.md
 ├── adapters/
 │   ├── healthkit/map.ts
@@ -31,9 +43,9 @@ runtimes/typescript/
 
 ## Runtime flow
 
-**`submit(envelope, options?)`** in [`collectors/pipeline.ts`](./collectors/pipeline.ts) accepts **`unknown`** (typically `JSON.parse` output), validates with **Ajv**, routes by **`source`**, then **`finalize()`** runs normalize → semantic → optional dedupe → OGIS validation. Diagrams below are **small** so previews stay readable; read top to bottom.
+**`submit(envelope, options?)`** is implemented in [`collectors/core/collector-engine.ts`](./collectors/core/collector-engine.ts) and re-exported from [`collectors/pipeline.ts`](./collectors/pipeline.ts). It accepts **`unknown`** (typically `JSON.parse` output), validates the envelope with **Ajv**, looks up **`builtinIngestPlugins[source]`** in [`registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts) for **payload validate + map**, then **`finalize()`** runs normalize → semantic → optional dedupe → OGIS validation. Diagrams below are **small** so previews stay readable; read top to bottom.
 
-**Tooling only:** **`specPaths`** ([`paths.ts`](./collectors/paths.ts)) walks up to the repo root for schema files; **`dev/run-pipeline.ts`** is a CLI smoke test, not an app SDK.
+**Tooling only:** **`specPaths`** ([`tooling/paths.ts`](./collectors/tooling/paths.ts)) walks up to the repo root for schema files; **`dev/run-pipeline.ts`** is a CLI smoke test, not an app SDK.
 
 ---
 
@@ -66,13 +78,13 @@ flowchart TB
   V --> E
 ```
 
-`IngestionEnvelope` is defined in [`pipeline.ts`](./collectors/pipeline.ts); wire shape matches [`spec/ingestion-envelope.schema.json`](../../spec/ingestion-envelope.schema.json).
+`IngestionEnvelope` is defined in [`ingestion/ingestion-types.ts`](./collectors/ingestion/ingestion-types.ts) and re-exported from [`pipeline.ts`](./collectors/pipeline.ts); wire shape matches [`spec/ingestion-envelope.schema.json`](../../spec/ingestion-envelope.schema.json).
 
 ---
 
 ### 3. Pipeline entry
 
-**What this layer does:** **`submit`** is the **single public entry** for the MVP pipeline. It owns **routing**: after envelope validation, it branches on **`env.source`**, runs the right **payload** validator and **adapter** **`map*PayloadToCanonical`**, then hands every successful map to **`finalize`**. So “pipeline entry” here means both **orchestration** and **per-source wiring** in one function—unlike Swift, there is no separate **`OGTCollectorPipeline`** type. **`finalize`** is shared: normalize, semantic, dedupe, and OGIS validation run identically for every source.
+**What this layer does:** **`submit`** is the **single public entry** for the MVP pipeline (see [`core/collector-engine.ts`](./collectors/core/collector-engine.ts)). After envelope validation it **looks up** **`builtinIngestPlugins[env.source]`** ([`registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts))—no growing **`if (source === …)`** list in the engine. The plugin runs **payload** Ajv validation and **`mapToCanonical`**, then **`finalize`** handles normalize, semantic, dedupe, and OGIS validation for every source. Unlike Swift, there is no separate **`OGTCollectorPipeline`** type; the barrel [`pipeline.ts`](./collectors/pipeline.ts) mirrors Swift’s stable import surface.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
@@ -84,13 +96,13 @@ flowchart TB
   S --> F
 ```
 
-**Options:** **`SubmitOptions`** — optional **`dedupe`** (`DedupeTracker`), applied inside **`finalize`**. There is **no** injectable registry; routing is **inline** on **`env.source`**.
+**Options:** **`SubmitOptions`** — optional **`dedupe`** (`DedupeTracker`), applied inside **`finalize`**. Extensibility: add entries to **`builtinIngestPlugins`** (or refactor to inject a plugin map if you need runtime registration).
 
 ---
 
 ### 4. Validation (envelope, then payload)
 
-**What this layer does:** Ensures wire data matches **JSON Schema** before calling vendor mappers. **Envelope** validation uses the shared ingestion schema. **Payload** validation is **per `source`** via dedicated Ajv validators in [`validators.ts`](./collectors/validators.ts), backed by **`spec/*-payload.schema.json`**. That keeps adapters free to assume shape and focus on field semantics. Unknown **`source`** skips payload validation and returns **`ADAPTER_UNKNOWN`** immediately—no adapter runs.
+**What this layer does:** Ensures wire data matches **JSON Schema** before calling vendor mappers. **Envelope** validation uses the shared ingestion schema. **Payload** validation is **per `source`** via Ajv validators from [`validation/schema-validators.ts`](./collectors/validation/schema-validators.ts), invoked through each plugin in [`registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts). Unknown **`source`** (missing plugin key) returns **`ADAPTER_UNKNOWN`** immediately—no map runs.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '18px'}}}%%
@@ -108,25 +120,25 @@ flowchart TB
 | `mock`      | `validateMockPayload`      |
 | `dexcom`    | `validateDexcomPayload`    |
 
-Unknown `source` → **`ADAPTER_UNKNOWN`** (no payload validation, no **`finalize`**).
+Unknown `source` → **`ADAPTER_UNKNOWN`** before **`finalize`**.
 
 ---
 
 ### 5. Adapter dispatch → pre-normalize canonical
 
-**What this layer does:** Converts **validated** vendor **`payload`** into **`CanonicalGlucoseReadingV01`** fields (snake_case wire shape toward OGIS) **before** normalization. Dispatch is an **`if / else` chain** on **`env.source`**, each arm calling one function from [`adapters/`](./adapters/). This is the TypeScript equivalent of Swift’s **registry + `mapPayload`**: same separation of concerns, different mechanism. Bugs in mapping typically surface as **`PAYLOAD_INVALID`** if types don’t match expectations, or later as **`MAPPING_FAILED`** / **`SEMANTIC_INVALID`** / **`CANONICAL_SCHEMA_INVALID`** after **`finalize`**.
+**What this layer does:** Converts **validated** vendor **`payload`** into **`CanonicalGlucoseReadingV01`** fields (snake_case wire shape toward OGIS) **before** normalization. Dispatch is **`builtinIngestPlugins[source].mapToCanonical`**, each plugin wired to one function from [`adapters/`](./adapters/)—same idea as Swift’s **registry + `mapPayload`**. Bugs in mapping typically surface as **`PAYLOAD_INVALID`** if types don’t match expectations, or later as **`MAPPING_FAILED`** / **`SEMANTIC_INVALID`** / **`CANONICAL_SCHEMA_INVALID`** after **`finalize`**.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TB
-  Br["Branch on env.source"]
-  One["Exactly one map*PayloadToCanonical"]
+  L["Lookup builtinIngestPlugins[source]"]
+  One["Plugin mapToCanonical"]
   C["CanonicalGlucoseReadingV01 pre-normalize"]
-  Br --> One
+  L --> One
   One --> C
 ```
 
-Functions: **`mapHealthKitPayloadToCanonical`**, **`mapDexcomPayloadToCanonical`**, **`mapMockPayloadToCanonical`** from [`adapters/`](./adapters/).
+Implementations: **`mapHealthKitPayloadToCanonical`**, **`mapDexcomPayloadToCanonical`**, **`mapMockPayloadToCanonical`** from [`adapters/`](./adapters/), registered in [`registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts).
 
 ---
 
@@ -156,7 +168,7 @@ If **`options.dedupe`** is omitted, dedupe is skipped.
 
 ### 7. Failure codes
 
-**What this layer does:** Maps **pipeline stages** to **`PipelineIssueCode`** strings defined in [`errors.ts`](./collectors/errors.ts). Use it when building dashboards, API responses, or retry logic. **`StructuredPipelineError`** always includes **`trace_id`** (from the envelope when available), **`message`** (often Ajv-formatted on TS), and optional **`field`**. Codes align with Swift’s **`OGTPipelineIssueCode`** for cross-runtime parity.
+**What this layer does:** Maps **pipeline stages** to **`PipelineIssueCode`** strings defined in [`core/pipeline-result.ts`](./collectors/core/pipeline-result.ts). Use it when building dashboards, API responses, or retry logic. **`StructuredPipelineError`** always includes **`trace_id`** (from the envelope when available), **`message`** (often Ajv-formatted on TS), and optional **`field`**. Codes align with Swift’s **`OGTPipelineIssueCode`** for cross-runtime parity.
 
 | Stage | Typical `PipelineIssueCode` |
 |--------|---------------------------|
@@ -172,7 +184,7 @@ If **`options.dedupe`** is omitted, dedupe is skipped.
 
 ### 8. Result type
 
-**What this layer does:** **`PipelineResult<T>`** is a **discriminated union**: check **`result.ok`** before reading **`value`** or **`error`**. This is the TypeScript idiom for the same idea as Swift’s **`OGTPipelineSubmitResult`**. Success means **`value`** is the **fully finalized** canonical reading. Failure means **`error`** is safe to log or return from an API without throwing—**`submit`** does not throw for validation failures.
+**What this layer does:** **`PipelineResult<T>`** is a **discriminated union**: check **`result.ok`** before reading **`value`** or **`error`**. This is the TypeScript idiom for the same idea as Swift’s **`OGTPipelineResult`**. Success means **`value`** is the **fully finalized** canonical reading. Failure means **`error`** is safe to log or return from an API without throwing—**`submit`** does not throw for validation failures.
 
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
@@ -184,7 +196,7 @@ flowchart TB
   R --> F
 ```
 
-See [`collectors/errors.ts`](./collectors/errors.ts).
+See [`collectors/core/pipeline-result.ts`](./collectors/core/pipeline-result.ts).
 
 ---
 
@@ -192,8 +204,8 @@ See [`collectors/errors.ts`](./collectors/errors.ts).
 
 1. Parse JSON to **`unknown`** (or pass a plain object).  
 2. **`submit(envelope, options?)`**.  
-3. **`validateEnvelope`** → by **`source`**, **`validate*Payload`**.  
-4. Call the matching **`map*PayloadToCanonical`**.  
+3. **`validateEnvelope`** → lookup **`builtinIngestPlugins[source]`** → **`validatePayload`**.  
+4. **`plugin.mapToCanonical`**.  
 5. **`finalize`**: **`normalizeCanonicalReading`** → **`applySemanticRules`** → optional **`DedupeTracker`** → **`validateGlucoseReadingOgis`**.  
 6. Return **`{ ok: true, value }`** or **`{ ok: false, error }`**.
 
@@ -202,7 +214,7 @@ See [`collectors/errors.ts`](./collectors/errors.ts).
 ## Extension points
 
 1. **Adapters:** add **`adapters/<source>/map.ts`** and export **`map*PayloadToCanonical`** consistent with pinned canonical shape before normalization.  
-2. **Pipeline:** add a branch in **`submit()`** for the new **`source`**, wire **`validators.ts`** (Ajv) for that payload, then call your mapper and **`finalize`**.  
+2. **Plugins:** add **`validate<Source>Payload`** in [`validation/schema-validators.ts`](./collectors/validation/schema-validators.ts), then register **`builtinIngestPlugins["<source>"]`** in [`registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts). **Do not** add new **`if (env.source === …)`** arms to **`submit()`**.  
 3. **Schemas:** extend JSON Schema under [`../../spec`](../../spec) when wire shapes change; keep **`specPaths`** and validator compilation in sync.
 
 ---
@@ -211,11 +223,11 @@ See [`collectors/errors.ts`](./collectors/errors.ts).
 
 | | TypeScript | Swift |
 |---|------------|--------|
-| Entry | **`submit()`** | **`OGTReferenceCollectorPipeline.submit`** → **`OGTCollectorSubmit.run`** |
-| Routing | Inline **`if`** on **`source`** | **`OGTAdapterRegistry`** / **`OGTDefaultAdapterRegistry`** |
+| Entry | **`submit()`** ([`core/collector-engine.ts`](./collectors/core/collector-engine.ts)) | **`OGTReferenceCollector.submit`** → **`OGTCollectorEngine.run`** |
+| Routing | **`builtinIngestPlugins[source]`** | **`OGTAdapterRegistry`** / **`OGTDefaultAdapterRegistry`** (registration table) |
 | Validation | **Ajv** + JSON Schema | Hand-written checks (parity intent) |
 | Options | **`{ dedupe? }`** | **`dedupeTracker`** + optional **`adapterRegistry`** |
-| Result | **`PipelineResult<T>`** (`ok` discriminant) | **`OGTPipelineSubmitResult`** (enum) |
+| Result | **`PipelineResult<T>`** (`ok` discriminant) | **`OGTPipelineResult`** (enum; Swift) |
 
 ---
 

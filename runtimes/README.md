@@ -37,7 +37,7 @@ Pick a stable **`source`** string, add **`spec/<source>-payload.schema.json`**, 
 
 | Runtime | Status | Notes |
 |---------|--------|--------|
-| [`typescript/`](./typescript/) | **Reference** (MVP) | Node: `collectors/`, `adapters/`, `dev/` CLI; `pnpm` package `@openglucose/telemetry-mvp`; [`README.md`](./typescript/README.md), [`ARCHITECTURE.md`](./typescript/ARCHITECTURE.md) |
+| [`typescript/`](./typescript/) | **Reference** (MVP) | Node: layered `collectors/` (see [`collectors/README.md`](./typescript/collectors/README.md)), `adapters/`, `dev/` CLI; `pnpm` package `@openglucose/telemetry-mvp`; [`README.md`](./typescript/README.md), [`ARCHITECTURE.md`](./typescript/ARCHITECTURE.md) |
 | [`swift/`](./swift/) | **MVP parity** with TS `submit` | SPM: `OpenGlucoseTelemetryRuntime`; [`README.md`](./swift/README.md), [`ARCHITECTURE.md`](./swift/ARCHITECTURE.md), [`examples/RunPipelineExample`](./swift/examples/) |
 
 Adding another language (Kotlin, Rust, …): new folder under `runtimes/<name>/`, same **layers** as [`RUNTIME-TEMPLATE.md`](./RUNTIME-TEMPLATE.md), register here.

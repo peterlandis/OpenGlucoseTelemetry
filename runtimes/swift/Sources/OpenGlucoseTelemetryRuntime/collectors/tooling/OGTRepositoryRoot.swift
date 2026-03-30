@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Repository root (schema paths)
 
 /// Locates the OGT repository root by walking upward until `spec/ingestion-envelope.schema.json` exists.
-/// Mirrors the TypeScript helper in `runtimes/typescript/collectors/paths.ts`.
+/// Mirrors the TypeScript helper in `runtimes/typescript/collectors/tooling/paths.ts`.
 public enum OGTRepositoryRoot {
     public static func find(startingAt url: URL) throws -> URL {
         var current: URL = url

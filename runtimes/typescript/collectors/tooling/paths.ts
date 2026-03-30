@@ -15,12 +15,14 @@ function findRepoRoot(startDir: string): string {
     }
     dir = parent;
   }
-  throw new Error("Could not locate OGT repo root (missing spec/ingestion-envelope.schema.json). Run from the repository root.");
+  throw new Error(
+    "Could not locate OGT repo root (missing spec/ingestion-envelope.schema.json). Run from the repository root.",
+  );
 }
 
-const collectorsDir: string = dirname(fileURLToPath(import.meta.url));
+const toolingDir: string = dirname(fileURLToPath(import.meta.url));
 export const specPaths = {
-  repoRoot: findRepoRoot(collectorsDir),
+  repoRoot: findRepoRoot(toolingDir),
   get ingestionEnvelopeSchema(): string {
     return join(this.repoRoot, "spec/ingestion-envelope.schema.json");
   },

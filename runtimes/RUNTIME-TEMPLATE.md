@@ -6,7 +6,7 @@ Every **language runtime** under `runtimes/<name>/` should follow the same **sha
 
 | Directory | Responsibility |
 |-----------|------------------|
-| **`collectors/`** | Ingestion pipeline: validate envelope, validate per-source payload, route by `source`, invoke adapters, then normalize, semantic rules, optional dedupe, OGIS-shaped validation (same **stage order** as `runtimes/typescript/collectors/pipeline.ts` / Swift `OGTCollectorSubmit.run`). May include path helpers to repo `spec/`. |
+| **`collectors/`** | Ingestion pipeline: validate envelope, validate per-source payload, route by `source`, invoke adapters, then normalize, semantic rules, optional dedupe, OGIS-shaped validation (same **stage order** as TypeScript `submit()` in [`collectors/core/collector-engine.ts`](./typescript/collectors/core/collector-engine.ts) / Swift `OGTCollectorEngine.run`). May include path helpers to repo `spec/`. |
 | **`adapters/`** | One **subfolder per `source` id** (e.g. `healthkit/`, `dexcom/`, `mock/`). Each maps vendor **`payload`** JSON to **pre-normalize** `glucose.reading` v0.1 fields; the collector normalizes and validates afterward. |
 
 Optional but common:
@@ -14,6 +14,21 @@ Optional but common:
 | Directory | Responsibility |
 |-----------|----------------|
 | **`dev/`** | CLI, fixture runners, local smoke scripts (see `runtimes/typescript/dev/`, `runtimes/swift/examples/`). |
+
+### Collectors subfolders (TypeScript + Swift parity)
+
+Implementations split **`collectors/`** the same way so contributors find **validation**, **registry**, and **normalization** in predictable places:
+
+| Subfolder | TypeScript | Swift |
+|-----------|------------|--------|
+| **`core/`** | **`collector-engine.ts`** (`submit()`), **`pipeline-result.ts`**, **`submit-options.ts`** | **`OGTCollectorEngine`**, **`OGTPipelineResult`**, **`OGTSubmitOptions`** |
+| **`ingestion/`** | **`ingestion-types.ts`** (`IngestionEnvelope`) | **`OGTIngestionEnvelope`**, **`OGTEnvelopeValidator`**, **`OGTIngestionTypes`** |
+| **`registry/`** | **`ingest-plugins.ts`** (`builtinIngestPlugins`) | **`OGTAdapterRegistration`**, **`OGTAdapterCatalog`**, **`OGTAdapterRegistry`** |
+| **`canonical/`** | **`canonical-glucose-reading.ts`** | **`OGTCanonicalGlucoseReadingV1`** |
+| **`validation/`** | **`schema-validators.ts`**, **`semantic.ts`** | **`OGTGlucoseReadingSchemaValidator`**, **`OGTSemanticValidator`** |
+| **`normalization/`** | **`normalize.ts`**, **`dedupe.ts`** | **`OGTNormalizer`**, **`OGTDedupeTracker`** |
+| **`tooling/`** | **`paths.ts`**, **`schema-load.ts`** | **`OGTRepositoryRoot`** (and schema load helpers) |
+| **Barrel** | **`pipeline.ts`** re-exports public API | — |
 
 ---
 
@@ -79,8 +94,8 @@ Use this when introducing a **new `source` id** (e.g. `abbott_libre`, `vendor_x`
 
 | Step | Files / actions |
 |------|-----------------|
-| **Ajv validator** | [`collectors/validators.ts`](./typescript/collectors/validators.ts): compile schema, export `validate<Source>Payload`, wire `formatAjvErrors`. |
-| **`submit()` branch** | [`collectors/pipeline.ts`](./typescript/collectors/pipeline.ts): `if (env.source === "<id>")` → validate payload → `map<Source>PayloadToCanonical` → `finalize`. |
+| **Ajv validator** | [`collectors/validation/schema-validators.ts`](./typescript/collectors/validation/schema-validators.ts): compile schema, export `validate<Source>Payload`. |
+| **Pluggable plugin** | [`collectors/registry/ingest-plugins.ts`](./typescript/collectors/registry/ingest-plugins.ts): add `builtinIngestPlugins["<id>"]` using `ajvPlugin(validate<Source>Payload, mapToCanonical)`. **Do not** edit [`collector-engine.ts`](./typescript/collectors/core/collector-engine.ts) `submit()` with new `if (source)` branches. |
 | **Adapter** | New folder [`adapters/<source>/map.ts`](./typescript/adapters/) (+ `README.md`): implement mapper; mirror field semantics from vendor docs. |
 | **Tests** | [`collectors/pipeline.test.ts`](./typescript/collectors/pipeline.test.ts): load golden envelope → `submit` → `toEqual` expected canonical. |
 | **CLI smoke (optional)** | `pnpm pipeline examples/ingestion/<name>-sample.json` after build. |
@@ -89,10 +104,9 @@ Use this when introducing a **new `source` id** (e.g. `abbott_libre`, `vendor_x`
 
 | Step | Files / actions |
 |------|-----------------|
-| **Payload validation** | [`OGTEnvelopeAndPayloadValidation.swift`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/OGTEnvelopeAndPayloadValidation.swift): allowed keys + required fields (parity with JSON Schema). |
-| **`validatePayloadForSource`** | [`OGTCollectorSubmit.swift`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/OGTCollectorSubmit.swift): new `case` for `source` id. |
-| **Adapter** | New [`adapters/<source>/`](./swift/Sources/OpenGlucoseTelemetryRuntime/adapters/) type conforming to **`OGTSourceAdapter`**: `mapPayload` → `OGTCanonicalGlucoseReadingV01`. |
-| **Registry** | [`OGTAdapterRegistry.swift`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/OGTAdapterRegistry.swift): `OGTDefaultAdapterRegistry.mapPayload` `switch` arm. |
+| **Payload validation** | [`OGTEnvelopeValidator.swift`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/ingestion/OGTEnvelopeValidator.swift): add `ogtValidate<Source>Payload` (parity with JSON Schema). |
+| **Adapter + registration** | New [`adapters/<source>/`](./swift/Sources/OpenGlucoseTelemetryRuntime/adapters/) type conforming to **`OGTSourceAdapter`**, plus **`public static let ogtRegistration: OGTAdapterRegistration`** (validate + map closures calling your validator and `mapPayload`). |
+| **Catalog** | [`OGTAdapterCatalog.swift`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/registry/OGTAdapterCatalog.swift): append **`YourAdapter.ogtRegistration`** to `builtinRegistrations`. **`OGTCollectorEngine`** has **no** per-source `switch`. |
 | **Tests** | Decode golden envelope, `submit`, compare to expected (or key fields); mirror TS. |
 
 ### 4. Documentation and parity
@@ -114,7 +128,7 @@ Use this when introducing a **new `source` id** (e.g. `abbott_libre`, `vendor_x`
 
 | Runtime | Layout |
 |---------|--------|
-| TypeScript (Node) | [`typescript/collectors/`](./typescript/collectors/), [`typescript/adapters/`](./typescript/adapters/) |
+| TypeScript (Node) | [`typescript/collectors/`](./typescript/collectors/) (see [`collectors/README.md`](./typescript/collectors/README.md)), [`typescript/adapters/`](./typescript/adapters/) |
 | Swift (SPM) | [`swift/Sources/OpenGlucoseTelemetryRuntime/collectors/`](./swift/Sources/OpenGlucoseTelemetryRuntime/collectors/), [`swift/.../adapters/`](./swift/Sources/OpenGlucoseTelemetryRuntime/adapters/) |
 
 ---

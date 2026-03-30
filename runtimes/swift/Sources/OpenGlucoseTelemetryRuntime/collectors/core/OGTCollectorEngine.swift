@@ -2,14 +2,15 @@ import Foundation
 
 // MARK: - Full pipeline (parity with pipeline.ts `submit`)
 
-/// Runs envelope validation → payload validation → adapter map → normalize → semantic rules → optional dedupe → OGIS schema validation.
-public enum OGTCollectorSubmit {
+/// Runs envelope validation → payload validation (via registry) → adapter map (via registry) → normalize → semantic rules → optional dedupe → OGIS schema validation.
+/// Per-source logic lives in **`OGTAdapterRegistration`** + [`OGTAdapterCatalog`](../registry/OGTAdapterCatalog.swift), not here.
+public enum OGTCollectorEngine {
     private static let defaultRegistry: OGTDefaultAdapterRegistry = OGTDefaultAdapterRegistry()
 
     public static func run(
         envelope: OGTIngestionEnvelope,
         options: OGTSubmitOptions = OGTSubmitOptions()
-    ) -> OGTPipelineSubmitResult {
+    ) -> OGTPipelineResult {
         let traceId: String = envelope.traceId
 
         if let envelopeErr: String = ogtValidateIngestionEnvelope(envelope) {
@@ -22,8 +23,15 @@ public enum OGTCollectorSubmit {
             )
         }
 
+        let registry: any OGTAdapterRegistry
+        if let custom: any OGTAdapterRegistry = options.adapterRegistry {
+            registry = custom
+        } else {
+            registry = Self.defaultRegistry
+        }
+
         do {
-            try validatePayloadForSource(envelope)
+            try registry.validatePayload(for: envelope.source, payload: envelope.payload)
         } catch let e as OGTPipelineError {
             switch e {
             case .unknownSource(let s):
@@ -40,14 +48,7 @@ public enum OGTCollectorSubmit {
             return .failure(payloadFailure(error, traceId: traceId, field: "payload"))
         }
 
-        let registry: any OGTAdapterRegistry
-        if let custom: any OGTAdapterRegistry = options.adapterRegistry {
-            registry = custom
-        } else {
-            registry = Self.defaultRegistry
-        }
-
-        let mapped: OGTCanonicalGlucoseReadingV01
+        let mapped: OGTCanonicalGlucoseReadingV1
         do {
             mapped = try registry.mapPayload(
                 for: envelope.source,
@@ -70,7 +71,7 @@ public enum OGTCollectorSubmit {
             return .failure(payloadFailure(error, traceId: traceId, field: "payload"))
         }
 
-        let normalized: OGTCanonicalGlucoseReadingV01
+        let normalized: OGTCanonicalGlucoseReadingV1
         do {
             normalized = try ogtNormalizeCanonicalReading(
                 reading: mapped,
@@ -115,19 +116,6 @@ public enum OGTCollectorSubmit {
         }
 
         return .success(normalized)
-    }
-
-    private static func validatePayloadForSource(_ envelope: OGTIngestionEnvelope) throws {
-        switch envelope.source {
-        case OGTHealthKitIngestAdapter.sourceId:
-            try ogtValidateHealthKitPayload(envelope.payload)
-        case OGTMockIngestAdapter.sourceId:
-            try ogtValidateMockPayload(envelope.payload)
-        case OGTDexcomIngestAdapter.sourceId:
-            try ogtValidateDexcomPayload(envelope.payload)
-        default:
-            throw OGTPipelineError.unknownSource(envelope.source)
-        }
     }
 
     private static func payloadFailure(

@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import type { ErrorObject, ValidateFunction } from "ajv";
-import { loadJsonSchema } from "./schema-load.js";
-import { specPaths } from "./paths.js";
+import { loadJsonSchema } from "../tooling/schema-load.js";
+import { specPaths } from "../tooling/paths.js";
 
 const require = createRequire(import.meta.url);
 

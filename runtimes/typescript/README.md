@@ -8,18 +8,17 @@ Shared contracts (schemas, fixtures) live at the repo root: [`../../spec`](../..
 
 ## Architecture (this package)
 
-**Collectors** implement the full **ingestion pipeline** in **`submit()`** ([`collectors/pipeline.ts`](./collectors/pipeline.ts)): **Ajv** validates the envelope and each per-source payload, then **`adapters/*/map.ts`** map to **`CanonicalGlucoseReadingV01`**, then **`normalizeCanonicalReading`**, **`applySemanticRules`**, optional **`DedupeTracker`**, and **Ajv** validation against the pinned OGIS **`glucose.reading`** schema.
+**Collectors** implement the full **ingestion pipeline** in **`submit()`** ([`collectors/core/collector-engine.ts`](./collectors/core/collector-engine.ts), re-exported from [`collectors/pipeline.ts`](./collectors/pipeline.ts)): **Ajv** validates the envelope and each per-source payload, then **`adapters/*/map.ts`** map to **`CanonicalGlucoseReadingV01`**, then **`normalizeCanonicalReading`**, **`applySemanticRules`**, optional **`DedupeTracker`**, and **Ajv** validation against the pinned OGIS **`glucose.reading`** schema.
 
 **Adapters** live under **`adapters/<source>/`** (`healthkit`, `dexcom`, `mock`). Each **`map*PayloadToCanonical`** turns the envelope **`payload`** into canonical fields **before** normalization (same role as Swift **`OGTSourceAdapter.mapPayload`**).
 
-**Routing:** TypeScript uses an **`if (env.source === …)`** chain inside **`submit()`** (not a separate registry type). To add a source, extend **`submit()`** and add a mapper plus **`validators.ts`** payload schema checks.
+**Routing:** **`builtinIngestPlugins[source]`** in [`collectors/registry/ingest-plugins.ts`](./collectors/registry/ingest-plugins.ts) — **no** growing `if (source)` list in **`submit()`**. Add a source by registering a plugin and adding validators in [`collectors/validation/schema-validators.ts`](./collectors/validation/schema-validators.ts).
 
 ```text
 unknown JSON (ingestion envelope)
   → validateEnvelope (Ajv / ingestion-envelope.schema.json)
   → submit(envelope, options?)
-  → validateHealthkitPayload | validateMockPayload | validateDexcomPayload (by source)
-  → mapHealthKitPayloadToCanonical | mapMockPayloadToCanonical | mapDexcomPayloadToCanonical
+  → builtinIngestPlugins[source]: validatePayload + mapToCanonical
   → finalize: normalizeCanonicalReading, applySemanticRules, optional dedupe
   → validateGlucoseReadingOgis (Ajv)
   → PipelineResult { ok: true, value } | { ok: false, error: StructuredPipelineError }
@@ -27,7 +26,7 @@ unknown JSON (ingestion envelope)
 
 **Optional:** pass **`SubmitOptions`** with **`dedupe`** (in-memory dedupe; duplicates → **`DUPLICATE_EVENT`**).
 
-**Tooling paths:** **`specPaths`** in [`collectors/paths.ts`](./collectors/paths.ts) locates the repo root and schema file paths (used by validators and tests)—it is **not** part of the app ingest path. **`dev/run-pipeline.ts`** is a small CLI that reads a JSON file and prints **`submit`** output.
+**Tooling paths:** **`specPaths`** in [`collectors/tooling/paths.ts`](./collectors/tooling/paths.ts) locates the repo root and schema file paths (used by validators and tests)—it is **not** part of the app ingest path. **`dev/run-pipeline.ts`** is a small CLI that reads a JSON file and prints **`submit`** output.
 
 More detail: **[`collectors/README.md`](./collectors/README.md)** (MVP notes, ports), **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** (folder layout, flow diagrams).
 
@@ -48,7 +47,7 @@ Main suite: **[`collectors/pipeline.test.ts`](./collectors/pipeline.test.ts)** (
 | **`returns DUPLICATE_EVENT when dedupe enabled`** | Second identical submit with same **`DedupeTracker`**. |
 | **`negative fixtures`** | **`examples/ingestion/negative-*.json`** → expected error codes. |
 
-Additional tests: [`collectors/normalize.test.ts`](./collectors/normalize.test.ts) (timestamp / unit helpers).
+Additional tests: [`collectors/normalization/normalize.test.ts`](./collectors/normalization/normalize.test.ts) (timestamp / unit helpers).
 
 ---
 
@@ -80,4 +79,4 @@ pnpm pipeline ../../examples/ingestion/healthkit-sample.json
 
 ## Relationship to Swift and other consumers
 
-This folder is the **reference** for behavior and golden JSON. Swift **`OGTCollectorSubmit.run`** follows the same stage order and error codes; it uses manual validators and an **`OGTAdapterRegistry`** instead of inline **`if`** branches and Ajv. When changing **`submit()`** behavior, update **`OGT-SWIFT-PARITY-MATRIX.md`** and Swift if you intend ports to stay aligned.
+This folder is the **reference** for behavior and golden JSON. Swift **`OGTCollectorEngine.run`** follows the same stage order and error codes; it uses manual validators and an **`OGTAdapterRegistry`** (Swift) vs **`builtinIngestPlugins`** (TypeScript)—both are **table lookups**, not per-source **`if`** chains in the engine. When changing **`submit()`** behavior, update **`OGT-SWIFT-PARITY-MATRIX.md`** and Swift if you intend ports to stay aligned.

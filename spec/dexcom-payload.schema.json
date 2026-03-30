@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openglucose.org/schemas/ogt/dexcom-payload.v0_1.json",
   "title": "Dexcom serializable EGV / glucose payload (OGT MVP)",
-  "description": "Vendor-shaped JSON suitable for mapping from Dexcom API responses or app caches into OGIS glucose.reading. Not a copy of vendor JSON Schema.",
+  "description": "OGT-defined serializable payload (snake_case fields) for EGV-style Dexcom data used in fixtures and adapters. Informed by Dexcom CGM concepts (e.g. system/display time, trend tokens) but not a field-for-field copy of Dexcom Developer API JSON; see https://developer.dexcom.com/docs/ for official REST/OAuth contracts. Producers map live API or export rows into this shape before ingestion.",
   "type": "object",
   "additionalProperties": false,
   "required": ["event_id", "subject_id", "system_time", "value", "unit"],

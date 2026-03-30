@@ -1,6 +1,6 @@
-import type { CanonicalGlucoseReadingV01 } from "./normalize.js";
-import type { StructuredPipelineError } from "./errors.js";
-import { err } from "./errors.js";
+import type { CanonicalGlucoseReadingV01 } from "../canonical/canonical-glucose-reading.js";
+import type { StructuredPipelineError } from "../core/pipeline-result.js";
+import { err } from "../core/pipeline-result.js";
 
 /** Clock skew window for future observed_at (OGIS time-semantics; OGT policy). */
 export const FUTURE_SKEW_MS: number = 15 * 60 * 1000;

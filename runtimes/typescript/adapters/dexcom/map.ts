@@ -1,4 +1,4 @@
-import type { CanonicalGlucoseReadingV01 } from "../../collectors/normalize.js";
+import type { CanonicalGlucoseReadingV01 } from "../../collectors/canonical/canonical-glucose-reading.js";
 
 export type DexcomGlucosePayload = {
   event_id: string;

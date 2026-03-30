@@ -27,18 +27,3 @@ public final class OGTDedupeTracker: @unchecked Sendable {
         seen.removeAll()
     }
 }
-
-/// Options for `OGTReferenceCollectorPipeline.submit` (e.g. dedupe, test registry). Not `Sendable` when using `OGTDedupeTracker`.
-public struct OGTSubmitOptions {
-    public var dedupeTracker: OGTDedupeTracker?
-    /// When `nil`, `OGTCollectorSubmit` uses `OGTDefaultAdapterRegistry`.
-    public var adapterRegistry: (any OGTAdapterRegistry)?
-
-    public init(
-        dedupeTracker: OGTDedupeTracker? = nil,
-        adapterRegistry: (any OGTAdapterRegistry)? = nil
-    ) {
-        self.dedupeTracker = dedupeTracker
-        self.adapterRegistry = adapterRegistry
-    }
-}

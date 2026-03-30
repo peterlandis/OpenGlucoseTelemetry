@@ -10,7 +10,7 @@
 OGT is a **language-agnostic contract** (`spec/`, `examples/`) plus **reference implementations** that turn **ingestion envelope** JSON into **OGIS-aligned `glucose.reading` v0.1** output with structured errors. As of this summary:
 
 - **TypeScript** (`runtimes/typescript/`) is the **reference** pipeline: Ajv validation, `submit()`, Vitest golden tests, `dev/` CLI, CI via `pnpm verify`.
-- **Swift** (`runtimes/swift/`) ships **`OpenGlucoseTelemetryRuntime`**: collector + adapters + parity-oriented stages with **`OGTReferenceCollectorPipeline`**, XCTest coverage, and **`RunPipelineExample`** for local smoke.
+- **Swift** (`runtimes/swift/`) ships **`OpenGlucoseTelemetryRuntime`**: collector + adapters + parity-oriented stages with **`OGTReferenceCollector`**, XCTest coverage, and **`RunPipelineExample`** for local smoke.
 - **Documentation** for contributors and consumers includes **`runtimes/RUNTIME-TEMPLATE.md`** (pipeline layers, **new provider** checklist), **`runtimes/README.md`**, per-runtime **`README.md`** / **`ARCHITECTURE.md`**, root **`README.md`** **For implementers** table, and handoff / parity artifacts under **`specifications/handoff/`**.
 
 **Not in scope for this “completion” picture:** durable event bus, REST/WebSocket query APIs, webhook exporters, and the broader README “platform” diagrams—these remain **Next** / **Later** in [`FEATURES.md`](../../FEATURES.md).
@@ -40,7 +40,7 @@ OGT is a **language-agnostic contract** (`spec/`, `examples/`) plus **reference 
 
 | Area | Role |
 |------|------|
-| [`runtimes/typescript/collectors/`](../../runtimes/typescript/collectors/) | `submit()`, `finalize()`, validators, normalize, semantic, dedupe, errors |
+| [`runtimes/typescript/collectors/`](../../runtimes/typescript/collectors/) | `core/collector-engine.ts` (`submit`), `registry/ingest-plugins`, `validation/`, `normalization/`, Vitest tests; barrel `pipeline.ts` |
 | [`runtimes/typescript/adapters/`](../../runtimes/typescript/adapters/) | `healthkit`, `dexcom`, `mock` mappers |
 | [`runtimes/typescript/dev/`](../../runtimes/typescript/dev/) | `run-pipeline.ts` CLI, `parity-check.mjs` |
 
@@ -50,7 +50,7 @@ OGT is a **language-agnostic contract** (`spec/`, `examples/`) plus **reference 
 
 | Area | Role |
 |------|------|
-| [`runtimes/swift/Sources/.../collectors/`](../../runtimes/swift/Sources/OpenGlucoseTelemetryRuntime/collectors/) | `OGTCollectorSubmit.run`, validation, normalize, semantic, schema check, `OGTSubmitOptions` |
+| [`runtimes/swift/Sources/.../collectors/`](../../runtimes/swift/Sources/OpenGlucoseTelemetryRuntime/collectors/) | `OGTCollectorEngine.run`, validation, normalize, semantic, schema check, `OGTSubmitOptions` |
 | [`runtimes/swift/Sources/.../adapters/`](../../runtimes/swift/Sources/OpenGlucoseTelemetryRuntime/adapters/) | HealthKit, Dexcom, Mock ingest adapters + registry |
 | [`runtimes/swift/Tests/`](../../runtimes/swift/Tests/) | XCTest (fixtures, pipeline, repo root) |
 | [`runtimes/swift/examples/RunPipelineExample`](../../runtimes/swift/examples/RunPipelineExample) | Executable: `swift run RunPipelineExample [envelope.json]` |
@@ -79,7 +79,7 @@ OGT is a **language-agnostic contract** (`spec/`, `examples/`) plus **reference 
 
 ## Pipeline stages (both MVP runtimes)
 
-Both TypeScript `submit()` and Swift `OGTCollectorSubmit.run` implement the same **logical** ordering: envelope validation → per-source payload validation → adapter map → normalize → semantic rules → optional dedupe → OGIS-shaped validation → success or structured failure. See **`RUNTIME-TEMPLATE.md`** for the authoritative layer table.
+Both TypeScript `submit()` and Swift `OGTCollectorEngine.run` implement the same **logical** ordering: envelope validation → per-source payload validation → adapter map → normalize → semantic rules → optional dedupe → OGIS-shaped validation → success or structured failure. See **`RUNTIME-TEMPLATE.md`** for the authoritative layer table.
 
 ---
 

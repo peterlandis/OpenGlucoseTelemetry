@@ -19,7 +19,7 @@
 ## Decisions
 
 1. **mmol/L factor:** TypeScript already uses **`MGDL_PER_MMOL = 18.018`** per OGIS unit-semantics. **GlucoseAITracker** still uses **18.0** in `OGTGlucoseIngestPipeline` and `GlucoseReadingCanonicalMapper` — documented as **intentional drift** pending an app PR; no TS change required.
-2. **Future timestamp skew:** TS enforces **15 minutes** (`FUTURE_SKEW_MS` in `runtimes/typescript/collectors/semantic.ts`). Swift **omits** this check — documented as **Waived** in the parity matrix with rationale (on-device / backfill semantics).
+2. **Future timestamp skew:** TS enforces **15 minutes** (`FUTURE_SKEW_MS` in `runtimes/typescript/collectors/validation/semantic.ts`). Swift **omits** this check — documented as **Waived** in the parity matrix with rationale (on-device / backfill semantics).
 3. **Full Ajv in Swift:** Out of scope for GAT; matrix records **subset** validation in-app vs full schema in TS.
 
 ## Residual drift / follow-ups

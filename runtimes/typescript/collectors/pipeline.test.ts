@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { submit } from "./pipeline.js";
-import { DedupeTracker } from "./dedupe.js";
-import { normalizeTimestamp, normalizeGlucoseToMgdl } from "./normalize.js";
-import { specPaths } from "./paths.js";
+import { DedupeTracker } from "./normalization/dedupe.js";
+import { normalizeTimestamp, normalizeGlucoseToMgdl } from "./normalization/normalize.js";
+import { specPaths } from "./tooling/paths.js";
 
 const root: string = specPaths.repoRoot;
 

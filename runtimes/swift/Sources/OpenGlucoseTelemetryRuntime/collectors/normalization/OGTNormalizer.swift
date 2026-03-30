@@ -9,11 +9,11 @@ private let maxVendorStringLength: Int = 256
 
 // MARK: - Errors
 
-public enum OGTNormalizeError: Error, Sendable, Equatable {
+public enum OGTNormalizerError: Error, Sendable, Equatable {
     case invalidDateTime(String)
 }
 
-extension OGTNormalizeError: LocalizedError {
+extension OGTNormalizerError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidDateTime(let iso):
@@ -37,7 +37,7 @@ public func ogtNormalizeTimestamp(iso: String) throws -> String {
     formatterBasic.formatOptions = [.withInternetDateTime]
     formatterBasic.timeZone = TimeZone(secondsFromGMT: 0)
     guard let date2: Date = formatterBasic.date(from: trimmed) else {
-        throw OGTNormalizeError.invalidDateTime(iso)
+        throw OGTNormalizerError.invalidDateTime(iso)
     }
     return ogtIso8601MillisUTC(date2)
 }
@@ -103,9 +103,9 @@ public func ogtIsValidOgDateTimeString(_ iso: String) -> Bool {
 }
 
 public func ogtNormalizeCanonicalReading(
-    reading: OGTCanonicalGlucoseReadingV01,
+    reading: OGTCanonicalGlucoseReadingV1,
     envelopeReceivedAt: String
-) throws -> OGTCanonicalGlucoseReadingV01 {
+) throws -> OGTCanonicalGlucoseReadingV1 {
     let observedAt: String = try ogtNormalizeTimestamp(iso: reading.observedAt)
     var sourceRecorded: String? = reading.sourceRecordedAt
     if let sr: String = sourceRecorded {
@@ -125,7 +125,7 @@ public func ogtNormalizeCanonicalReading(
         receivedFinal = try ogtNormalizeTimestamp(iso: envelopeReceivedAt)
     }
 
-    var next: OGTCanonicalGlucoseReadingV01 = reading
+    var next: OGTCanonicalGlucoseReadingV1 = reading
     next.observedAt = observedAt
     next.value = glucose.value
     next.unit = glucose.unit
