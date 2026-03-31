@@ -23,6 +23,21 @@ OGT sits between source systems and downstream consumers as the runtime framewor
 
 ---
 
+## Relationship to Open Glucose Interoperability Standard (OGIS)
+
+OGIS and OGT are complementary:
+
+- **OGIS defines the standard** — canonical data model, schemas, and semantics for glucose events
+- **OGT implements the runtime** — ingestion, validation, normalization, and routing that operationalizes OGIS-compliant events
+
+In simple terms:
+
+> OGIS defines what glucose data means, and OGT defines how glucose data moves.
+
+**OGIS repo (source of truth):** https://github.com/peterlandis/OpenGlucoseInteroperabilityStandard
+
+---
+
 ## Repository structure
 
 The repo is split into **shared contracts** (schemas and golden files) and **language runtimes** (code that implements the same pipeline).
@@ -214,7 +229,7 @@ A **full operational platform** might add layers that are **not** shipped here a
 
 ## How OGT uses OGIS
 
-OGT depends on OGIS for the meaning of the data.
+OGT depends on OGIS for the meaning of the data. The authoritative OGIS standard lives in the **OpenGlucoseInteroperabilityStandard** repo: https://github.com/peterlandis/OpenGlucoseInteroperabilityStandard
 
 **OGIS tells OGT:**
 
@@ -233,14 +248,7 @@ OGT depends on OGIS for the meaning of the data.
 - routes them
 - exposes them to downstream systems
 
-So the relationship is:
-
-- **OGIS** defines the standard
-- **OGT** implements the standard in motion
-
-In simple terms:
-
-> OGIS defines what glucose data means, and OGT defines how glucose data moves.
+For the high-level framing, see **[Relationship to Open Glucose Interoperability Standard (OGIS)](#relationship-to-open-glucose-interoperability-standard-ogis)** above.
 
 ---
 
