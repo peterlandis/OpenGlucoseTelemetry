@@ -26,29 +26,11 @@ extension OGTNormalizerError: LocalizedError {
 
 /// Parses RFC 3339 / ISO 8601; returns UTC ISO string trimmed to milliseconds (parity with `normalizeTimestamp` in TS).
 public func ogtNormalizeTimestamp(iso: String) throws -> String {
-    let trimmed: String = iso.trimmingCharacters(in: .whitespacesAndNewlines)
-    let formatterFractional: ISO8601DateFormatter = ISO8601DateFormatter()
-    formatterFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    formatterFractional.timeZone = TimeZone(secondsFromGMT: 0)
-    if let date: Date = formatterFractional.date(from: trimmed) {
-        return ogtIso8601MillisUTC(date)
-    }
-    let formatterBasic: ISO8601DateFormatter = ISO8601DateFormatter()
-    formatterBasic.formatOptions = [.withInternetDateTime]
-    formatterBasic.timeZone = TimeZone(secondsFromGMT: 0)
-    guard let date2: Date = formatterBasic.date(from: trimmed) else {
-        throw OGTNormalizerError.invalidDateTime(iso)
-    }
-    return ogtIso8601MillisUTC(date2)
+    try OGTRFC3339.normalizeToMillisUTC(iso)
 }
 
 private func ogtIso8601MillisUTC(_ date: Date) -> String {
-    let ms: Int64 = Int64((date.timeIntervalSince1970 * 1000.0).rounded(.down))
-    let rounded: Date = Date(timeIntervalSince1970: Double(ms) / 1000.0)
-    let out: ISO8601DateFormatter = ISO8601DateFormatter()
-    out.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    out.timeZone = TimeZone(secondsFromGMT: 0)
-    return out.string(from: rounded)
+    OGTRFC3339.encodeMillisUTC(date)
 }
 
 // MARK: - Glucose unit normalization
@@ -90,16 +72,7 @@ public func ogtBoundOptionalString(_ s: String?) -> String? {
 
 /// Whether `iso` parses as RFC 3339 / ISO 8601 (used for envelope / schema checks).
 public func ogtIsValidOgDateTimeString(_ iso: String) -> Bool {
-    let f1: ISO8601DateFormatter = ISO8601DateFormatter()
-    f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    f1.timeZone = TimeZone(secondsFromGMT: 0)
-    if f1.date(from: iso) != nil {
-        return true
-    }
-    let f2: ISO8601DateFormatter = ISO8601DateFormatter()
-    f2.formatOptions = [.withInternetDateTime]
-    f2.timeZone = TimeZone(secondsFromGMT: 0)
-    return f2.date(from: iso) != nil
+    OGTRFC3339.decode(iso) != nil
 }
 
 public func ogtNormalizeCanonicalReading(
