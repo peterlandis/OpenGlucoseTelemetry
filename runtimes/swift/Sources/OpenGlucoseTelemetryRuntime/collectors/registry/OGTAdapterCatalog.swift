@@ -8,6 +8,7 @@ public enum OGTAdapterCatalog {
     public static let builtinRegistrations: [OGTAdapterRegistration] = [
         OGTHealthKitIngestAdapter.ogtRegistration,
         OGTDexcomIngestAdapter.ogtRegistration,
+        OGTManualIngestAdapter.ogtRegistration,
         OGTMockIngestAdapter.ogtRegistration,
     ]
 }

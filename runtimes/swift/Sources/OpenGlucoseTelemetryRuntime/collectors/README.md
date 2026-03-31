@@ -55,8 +55,8 @@ flowchart TB
 | 3 | **Payload validation** | For the given `source`, enforce allowed keys and required fields. Implemented via the registry; unknown `source` → **`ADAPTER_UNKNOWN`**. |
 | 4 | **Adapter map** | **`adapters/<source>/`** maps validated payload into **`OGTCanonicalGlucoseReadingV1`** fields **before** full normalization (units/timestamps may still be vendor-shaped). |
 | 5 | **Normalize** | UTC timestamps, glucose to **mg/dL**, trim optional strings, align `received_at` with envelope when needed. |
-| 6 | **Semantic rules** | Policy checks (e.g. plausible mg/dL range, “not too far in the future” on `observed_at`). |
-| 7 | **Dedupe (optional)** | If **`OGTSubmitOptions.dedupeTracker`** is set, drop duplicate logical events by subject + time + raw event id. |
+| 6 | **Semantic rules** | Policy checks (e.g. plausible mg/dL range, “not too far in the future” on `observed_at`). The default policy allows a fixed **15-minute future-skew** window. |
+| 7 | **Dedupe (optional)** | If **`OGTSubmitOptions.dedupeTracker`** is set, drop duplicate logical events by `subject_id + observed_at + raw_event_id` (process-scoped, in-memory). |
 | 8 | **OGIS validation** | Final check against pinned **`glucose.reading` v0.1** semantics. |
 | 9 | **Result** | **`OGTPipelineResult`**: `.success(reading)` or `.failure(error)` with stable **`OGTPipelineIssueCode`**. |
 
@@ -88,7 +88,7 @@ In one sentence: the collector **turns one ingestion envelope into one validated
 3. **`OGTAdapterRegistry.validatePayload`** — for the envelope’s `source`, run the registered validator (e.g. **`ogtValidateHealthKitPayload`**). Unknown source → **`ADAPTER_UNKNOWN`**; bad keys/types → **`PAYLOAD_INVALID`**.
 4. **`OGTAdapterRegistry.mapPayload`** — call the adapter’s **`mapPayload`** → **`OGTCanonicalGlucoseReadingV1`** (pre-normalize).
 5. **`ogtNormalizeCanonicalReading`** — timestamps, mg/dL, string bounds; failures surface as **`MAPPING_FAILED`** where applicable.
-6. **`ogtApplySemanticRules`** — range and time policy; may return **`SEMANTIC_INVALID`**.
+6. **`ogtApplySemanticRules`** — range and time policy (including a fixed future-skew window); may return **`SEMANTIC_INVALID`**.
 7. **`OGTDedupeTracker`** (if provided) — duplicate key → **`DUPLICATE_EVENT`**.
 8. **`ogtValidateGlucoseReadingOgis`** — final pin against OGIS rules; **`CANONICAL_SCHEMA_INVALID`** if invalid.
 9. Return **`.success(normalized)`** or **`.failure(OGTStructuredPipelineError)`** with **`trace_id`** and optional **`field`**.

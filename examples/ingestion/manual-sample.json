@@ -1,0 +1,16 @@
+{
+  "source": "manual",
+  "payload": {
+    "subject_id": "local:iphone:demo-subject",
+    "value": 123,
+    "unit": "mg/dL",
+    "observed_at": "2026-03-29T14:32:00.000Z"
+  },
+  "received_at": "2026-03-29T14:33:15.000Z",
+  "trace_id": "manual-golden-1",
+  "adapter": {
+    "id": "ogt.adapter.manual",
+    "version": "0.1.0"
+  }
+}
+
