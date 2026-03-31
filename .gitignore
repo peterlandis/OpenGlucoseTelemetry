@@ -3,3 +3,4 @@ dist/
 .pnpm-store/
 runtimes/typescript/dist/
 runtimes/swift/.build/
+runtimes/swift/.swiftpm/
