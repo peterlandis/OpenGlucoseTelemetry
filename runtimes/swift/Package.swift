@@ -25,6 +25,9 @@ let package: Package = Package(
             exclude: [
                 "collectors/README.md",
                 "adapters/README.md",
+            ],
+            resources: [
+                .process("spec")
             ]
         ),
         .testTarget(

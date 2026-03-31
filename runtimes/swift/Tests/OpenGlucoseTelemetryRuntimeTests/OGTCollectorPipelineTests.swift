@@ -48,6 +48,11 @@ final class OGTCollectorPipelineTests: XCTestCase {
         XCTAssertEqual(reading.provenance.sourceSystem, "dexcom")
     }
 
+    func testPinnedOGISSchemaResourceLoads() throws {
+        let data: Data = try OGTGlucoseReadingJSONSchemaResource.schemaData()
+        XCTAssertFalse(data.isEmpty)
+    }
+
     func testReferencePipelineHealthKitBadUnitFixtureFailsWithPayloadInvalid() throws {
         let fileURL: URL = URL(fileURLWithPath: "\(#filePath)", isDirectory: false)
         let root: URL = try OGTRepositoryRoot.find(startingAt: fileURL)

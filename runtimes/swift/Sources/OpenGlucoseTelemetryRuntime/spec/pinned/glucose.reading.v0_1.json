@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openglucoseinteroperability.org/schemas/glucose.reading.v0_1.json",
+  "title": "glucose.reading",
+  "description": "OGIS canonical glucose reading event, version 0.1 (GlucoseAITracker / OGT GAT MVP).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_type",
+    "event_version",
+    "subject_id",
+    "observed_at",
+    "value",
+    "unit",
+    "measurement_source",
+    "device",
+    "provenance"
+  ],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "const": "glucose.reading"
+    },
+    "event_version": {
+      "type": "string",
+      "const": "0.1"
+    },
+    "subject_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the data subject in the producer's namespace (see semantic conventions for guidance)."
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the glucose measurement applies (clinical observation time), RFC 3339 / ISO 8601 in UTC (Z offset recommended)."
+    },
+    "source_recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source device or app recorded the sample, if distinct from observed_at."
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the submitting system (e.g. OGT collector) received the event."
+    },
+    "value": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Glucose concentration in the unit given by `unit`."
+    },
+    "unit": {
+      "type": "string",
+      "enum": ["mg/dL", "mmol/L"]
+    },
+    "measurement_source": {
+      "type": "string",
+      "enum": ["cgm", "bgm", "manual"],
+      "description": "How the reading was obtained; see spec/semantic-conventions/README.md."
+    },
+    "device": {
+      "$ref": "#/$defs/device"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "trend": {
+      "$ref": "#/$defs/trend",
+      "description": "Optional CGM trend; omit for BGM/manual if unavailable."
+    },
+    "quality": {
+      "$ref": "#/$defs/quality",
+      "description": "Optional quality flag from source or pipeline."
+    }
+  },
+  "$defs": {
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "manufacturer": {
+          "type": "string",
+          "description": "Device manufacturer name or brand when known."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name or identifier when known."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["cgm", "bgm", "unknown", "phone", "watch", "app", "other"],
+          "description": "Class of device; see spec/semantic-conventions/README.md."
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_system", "raw_event_id", "adapter_version", "ingested_at"],
+      "properties": {
+        "source_system": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Logical source (e.g. com.apple.health, dexcom, app.manual)."
+        },
+        "raw_event_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier for the source record (e.g. HealthKit UUID, vendor event id)."
+        },
+        "adapter_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Semantic version of the adapter or mapper that produced this event."
+        },
+        "ingested_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the event entered the OGT collector or equivalent ingest boundary, RFC 3339 UTC."
+        }
+      }
+    },
+    "trend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": ["rising", "falling", "stable", "unknown"]
+        },
+        "rate": {
+          "type": "number",
+          "description": "Rate of change in rate_unit."
+        },
+        "rate_unit": {
+          "type": "string",
+          "description": "e.g. mg/dL/min or mmol/L/min"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["valid", "questionable", "invalid", "unknown"]
+        }
+      }
+    }
+  }
+}
+
