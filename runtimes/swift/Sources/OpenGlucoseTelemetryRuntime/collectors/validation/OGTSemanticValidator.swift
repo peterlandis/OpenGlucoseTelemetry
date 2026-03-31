@@ -69,17 +69,5 @@ public func ogtApplySemanticRules(
 }
 
 private func ogtParseEpochMs(_ iso: String) -> Int64? {
-    let f1: ISO8601DateFormatter = ISO8601DateFormatter()
-    f1.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    f1.timeZone = TimeZone(secondsFromGMT: 0)
-    if let d: Date = f1.date(from: iso) {
-        return Int64(d.timeIntervalSince1970 * 1000.0)
-    }
-    let f2: ISO8601DateFormatter = ISO8601DateFormatter()
-    f2.formatOptions = [.withInternetDateTime]
-    f2.timeZone = TimeZone(secondsFromGMT: 0)
-    guard let d2: Date = f2.date(from: iso) else {
-        return nil
-    }
-    return Int64(d2.timeIntervalSince1970 * 1000.0)
+    OGTRFC3339.epochMs(iso)
 }
