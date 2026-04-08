@@ -125,6 +125,8 @@ case .failure(let error):
 
 **Alternatives:** call **`OGTCollectorEngine.run(envelope:options:)`** directly, or pass **`OGTSubmitOptions`** for a custom **`OGTAdapterRegistry`** or **`OGTDedupeTracker`**. See **[Example tests](#example-tests-walking-through-usage)** and **`collectors/README.md`**.
 
+**Bulk insight / chart gating:** When re-running normalization + **`ogtApplySemanticRules`** + **`ogtValidateGlucoseReadingOgis`** over many persisted readings, build timestamps with **`OGTRFC3339.encodeMillisUTC`** and use **`ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339`** instead of **`ogtNormalizeCanonicalReading`** so timestamp strings are not re-parsed through ICU on every row. Details and caveats: **[`collectors/README.md` — Performance: bulk re-validation](Sources/OpenGlucoseTelemetryRuntime/collectors/README.md#performance-bulk-re-validation-eg-insight-gating)**.
+
 ### 4. Platform requirements
 
 This package declares **iOS 17**, **macOS 14**, and **watchOS 10** minimums in **`Package.swift`**. App targets must meet those deployment targets (or you must lower the package’s platform versions in a fork).
