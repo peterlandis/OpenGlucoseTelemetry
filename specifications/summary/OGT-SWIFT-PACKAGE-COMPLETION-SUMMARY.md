@@ -45,3 +45,4 @@ Step-by-step instructions for adding this package to an Xcode app (including **G
 - [`runtimes/swift/ARCHITECTURE.md`](../../runtimes/swift/ARCHITECTURE.md) — folder layout
 - [`runtimes/RUNTIME-TEMPLATE.md`](../../runtimes/RUNTIME-TEMPLATE.md) — cross-runtime template
 - [`specifications/handoff/OGT-SWIFT-PARITY-MATRIX.md`](../handoff/OGT-SWIFT-PARITY-MATRIX.md) — TS/Swift parity
+- [`specifications/summary/OGT-SWIFT-BULK-INSIGHT-PERFORMANCE-COMPLETION-SUMMARY.md`](./OGT-SWIFT-BULK-INSIGHT-PERFORMANCE-COMPLETION-SUMMARY.md) — bulk re-validation / RFC3339 performance (trusted normalizer + ASCII `decode` fast path)
