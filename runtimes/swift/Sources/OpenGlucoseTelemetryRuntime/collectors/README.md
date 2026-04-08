@@ -87,7 +87,8 @@ In one sentence: the collector **turns one ingestion envelope into one validated
 2. **`ogtValidateIngestionEnvelope`** — fail fast with **`ENVELOPE_INVALID`** if the wrapper is wrong.
 3. **`OGTAdapterRegistry.validatePayload`** — for the envelope’s `source`, run the registered validator (e.g. **`ogtValidateHealthKitPayload`**). Unknown source → **`ADAPTER_UNKNOWN`**; bad keys/types → **`PAYLOAD_INVALID`**.
 4. **`OGTAdapterRegistry.mapPayload`** — call the adapter’s **`mapPayload`** → **`OGTCanonicalGlucoseReadingV1`** (pre-normalize).
-5. **`ogtNormalizeCanonicalReading`** — timestamps, mg/dL, string bounds; failures surface as **`MAPPING_FAILED`** where applicable.
+5. **`ogtNormalizeCanonicalReading`** — timestamps, mg/dL, string bounds; failures surface as **`MAPPING_FAILED`** where applicable.  
+   **Bulk / insight gating (optional):** if you already built **`OGTCanonicalGlucoseReadingV1`** with timestamps from **`OGTRFC3339.encodeMillisUTC(_:)`** (e.g. from persisted `Date` fields), call **`ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339`** instead to skip redundant **`ISO8601DateFormatter`/ICU** re-parsing while keeping the same mg/dL + string-bound behavior. The main collector path still uses **`ogtNormalizeCanonicalReading`** for arbitrary wire strings.
 6. **`ogtApplySemanticRules`** — range and time policy (including a fixed future-skew window); may return **`SEMANTIC_INVALID`**.
 7. **`OGTDedupeTracker`** (if provided) — duplicate key → **`DUPLICATE_EVENT`**.
 8. **`ogtValidateGlucoseReadingOgis`** — final pin against OGIS rules; **`CANONICAL_SCHEMA_INVALID`** if invalid.
@@ -108,11 +109,27 @@ Each folder has a **single responsibility**. Add new code in the folder that mat
 | **`registry/`** | **Pluggable routing** (validate + map per `source`). | **`OGTAdapterRegistration`**, **`OGTAdapterCatalog.builtinRegistrations`**, **`OGTAdapterRegistry`** / **`OGTDefaultAdapterRegistry`**. Append **`YourAdapter.ogtRegistration`** when adding a built-in source. |
 | **`canonical/`** | **OGIS-aligned canonical reading model** for the pipeline. | **`OGTCanonicalGlucoseReadingV1`** and nested types; JSON encoding helpers. Adapter output targets this shape **before** normalization. |
 | **`validation/`** | **Post-map checks** that are not vendor-specific. | **`OGTGlucoseReadingSchemaValidator`** — final OGIS-shaped checks; **`OGTSemanticValidator`** — **`ogtApplySemanticRules`**. |
-| **`normalization/`** | **Cross-vendor normalization and optional dedupe.** | **`OGTNormalizer`** — **`ogtNormalizeCanonicalReading`**, timestamp helpers, mg/dL; **`OGTDedupeTracker`**. |
+| **`normalization/`** | **Cross-vendor normalization and optional dedupe.** | **`OGTNormalizer`** — **`ogtNormalizeCanonicalReading`**, **`ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339`** (trusted `encodeMillisUTC` timestamps; avoids ICU re-parse); **`OGTRFC3339`** — RFC3339 codec with an **ASCII fast path** for common UTC Zulu shapes (speeds **`epochMs`** / **`decode`** on normalized strings, e.g. semantic + OGIS validation); **`OGTDedupeTracker`**. |
 | **`json/`** | **Dynamic JSON for `payload`.** | **`OGTJSONValue`**, **`OGTJSONValueExtractors`** — parsing and safe extraction for adapter code. |
 | **`tooling/`** | **Repo root discovery for tests/tools.** | **`OGTRepositoryRoot`**. Not used in production ingest. |
 
 **Entry point:** Callers typically import **`OpenGlucoseTelemetryRuntime`** and use **`OGTReferenceCollector`** or **`OGTCollectorEngine.run`**; see **`core/`** for the exact types.
+
+---
+
+## Performance: bulk re-validation (e.g. insight gating)
+
+Some apps persist **Date-native** canonical rows and need to run **semantic rules + OGIS validation** over **thousands** of readings (filtering what appears in charts). Doing the full **`ogtNormalizeCanonicalReading`** path on each row **re-parses** timestamps that were just emitted with **`OGTRFC3339.encodeMillisUTC`**, which is unnecessarily expensive (ICU).
+
+**Recommended pattern:**
+
+1. Map each domain row to **`OGTCanonicalGlucoseReadingV1`** using **`OGTRFC3339.encodeMillisUTC(_:)`** for every timestamp field (same as ingest).
+2. Call **`try ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339(reading:envelopeReceivedAt:)`** instead of **`ogtNormalizeCanonicalReading`**.
+3. Call **`ogtApplySemanticRules`** and **`ogtValidateGlucoseReadingOgis`** on the result as usual.
+
+**`OGTRFC3339.decode`** / **`epochMs`** also try an **ASCII fast path** first for UTC Zulu strings in the shapes **`YYYY-MM-DDTHH:MM:SS.sssZ`** (24 chars) and **`YYYY-MM-DDTHH:MM:SSZ`** (20 chars), which matches normalized output from **`encodeMillisUTC`** and reduces ICU work inside validators.
+
+**Do not** use the trusted normalizer for arbitrary vendor wire timestamps; keep **`ogtNormalizeCanonicalReading`** for those.
 
 ---
 

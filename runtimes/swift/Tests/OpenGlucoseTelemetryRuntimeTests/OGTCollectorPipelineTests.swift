@@ -184,4 +184,66 @@ final class OGTCollectorPipelineTests: XCTestCase {
         XCTAssertEqual(err.code, .adapterUnknown)
         XCTAssertEqual(err.field, "source")
     }
+
+    /// `decode` / `epochMs` ASCII fast path must agree with ms-rounded dates from `encodeMillisUTC`.
+    func testDecodeFastPathMatchesEncodeMillisUTC() {
+        let samples: [Date] = [
+            Date(timeIntervalSince1970: 0),
+            Date(timeIntervalSince1970: 1_704_000_000.123),
+            Date(timeIntervalSince1970: 1_800_000_000.999),
+        ]
+        for original: Date in samples {
+            let wire: String = OGTRFC3339.encodeMillisUTC(original)
+            let msRounded: Int64 = Int64((original.timeIntervalSince1970 * 1000.0).rounded(.down))
+            let expected: Date = Date(timeIntervalSince1970: Double(msRounded) / 1000.0)
+            guard let decoded: Date = OGTRFC3339.decode(wire) else {
+                XCTFail("decode failed for \(wire)")
+                return
+            }
+            XCTAssertEqual(decoded.timeIntervalSince1970, expected.timeIntervalSince1970, accuracy: 0.001, wire)
+            let epoch: Int64? = OGTRFC3339.epochMs(wire)
+            XCTAssertEqual(epoch, msRounded, wire)
+        }
+    }
+
+    /// Bulk insight path uses trusted normalization; ensure it matches the ICU parse path when timestamps are `encodeMillisUTC` output.
+    func testTrustedMillisNormalizationMatchesFullPathWhenEncodedFromDate() throws {
+        let anchor: Date = Date(timeIntervalSince1970: 1_704_000_000.0)
+        let observedWire: String = OGTRFC3339.encodeMillisUTC(anchor)
+        let sourceRecWire: String = OGTRFC3339.encodeMillisUTC(anchor.addingTimeInterval(-60))
+        let receivedWire: String = OGTRFC3339.encodeMillisUTC(anchor.addingTimeInterval(1))
+        let ingestedWire: String = OGTRFC3339.encodeMillisUTC(anchor.addingTimeInterval(2))
+        let envelopeWire: String = OGTRFC3339.encodeMillisUTC(anchor.addingTimeInterval(3))
+
+        let reading: OGTCanonicalGlucoseReadingV1 = OGTCanonicalGlucoseReadingV1(
+            eventType: "glucose.reading",
+            eventVersion: "0.1",
+            subjectId: "s1",
+            observedAt: observedWire,
+            sourceRecordedAt: sourceRecWire,
+            receivedAt: receivedWire,
+            value: 6.6,
+            unit: "mmol/L",
+            measurementSource: "cgm",
+            device: OGTCanonicalDevice(type: "cgm", manufacturer: "  Acme  ", model: nil),
+            provenance: OGTCanonicalProvenance(
+                sourceSystem: "test",
+                rawEventId: "evt-1",
+                adapterVersion: "1",
+                ingestedAt: ingestedWire
+            ),
+            trend: nil,
+            quality: nil
+        )
+
+        let full: OGTCanonicalGlucoseReadingV1 = try ogtNormalizeCanonicalReading(
+            reading: reading,
+            envelopeReceivedAt: envelopeWire
+        )
+        let trusted: OGTCanonicalGlucoseReadingV1 = try ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339(
+            reading: reading,
+            envelopeReceivedAt: envelopeWire
+        )
+        XCTAssertEqual(trusted, full)
+    }
 }

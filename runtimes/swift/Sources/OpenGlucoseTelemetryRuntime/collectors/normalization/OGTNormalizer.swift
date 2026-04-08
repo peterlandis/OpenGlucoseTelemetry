@@ -117,3 +117,63 @@ public func ogtNormalizeCanonicalReading(
     )
     return next
 }
+
+// MARK: - Trusted timestamp strings (insight bulk filter; avoids ICU re-parse)
+
+/// Same field semantics as `ogtNormalizeCanonicalReading`, but **does not** call `ogtNormalizeTimestamp` (no `ISO8601DateFormatter` / ICU parse).
+///
+/// Use only when every timestamp field and `envelopeReceivedAt` were produced by `OGTRFC3339.encodeMillisUTC(_:)` (or are otherwise already
+/// normalized to the same UTC millisecond RFC3339 form). The bulk insight path builds wire rows from persisted `Date` values this way;
+/// re-parsing those strings thousands of times dominated main-thread profiles.
+public func ogtNormalizeCanonicalReadingTrustedMillisEncodedRFC3339(
+    reading: OGTCanonicalGlucoseReadingV1,
+    envelopeReceivedAt: String
+) throws -> OGTCanonicalGlucoseReadingV1 {
+    let observedAt: String = reading.observedAt.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !observedAt.isEmpty else {
+        throw OGTNormalizerError.invalidDateTime(reading.observedAt)
+    }
+
+    var sourceRecorded: String? = reading.sourceRecordedAt.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    if let s: String = sourceRecorded, s.isEmpty {
+        sourceRecorded = nil
+    }
+
+    let receivedAtNormalized: String? = reading.receivedAt.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    let ingestedAt: String = reading.provenance.ingestedAt.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !ingestedAt.isEmpty else {
+        throw OGTNormalizerError.invalidDateTime(reading.provenance.ingestedAt)
+    }
+
+    let glucose: (value: Double, unit: String) = ogtNormalizeGlucoseToMgdl(value: reading.value, unit: reading.unit)
+
+    let envelopeTrimmed: String = envelopeReceivedAt.trimmingCharacters(in: .whitespacesAndNewlines)
+    let receivedFinal: String
+    if let r: String = receivedAtNormalized, !r.isEmpty {
+        receivedFinal = r
+    } else {
+        guard !envelopeTrimmed.isEmpty else {
+            throw OGTNormalizerError.invalidDateTime(envelopeReceivedAt)
+        }
+        receivedFinal = envelopeTrimmed
+    }
+
+    var next: OGTCanonicalGlucoseReadingV1 = reading
+    next.observedAt = observedAt
+    next.value = glucose.value
+    next.unit = glucose.unit
+    next.receivedAt = receivedFinal
+    next.sourceRecordedAt = sourceRecorded
+    next.provenance = OGTCanonicalProvenance(
+        sourceSystem: reading.provenance.sourceSystem.trimmingCharacters(in: .whitespacesAndNewlines),
+        rawEventId: reading.provenance.rawEventId.trimmingCharacters(in: .whitespacesAndNewlines),
+        adapterVersion: reading.provenance.adapterVersion.trimmingCharacters(in: .whitespacesAndNewlines),
+        ingestedAt: ingestedAt
+    )
+    next.device = OGTCanonicalDevice(
+        type: reading.device.type,
+        manufacturer: ogtBoundOptionalString(reading.device.manufacturer),
+        model: ogtBoundOptionalString(reading.device.model)
+    )
+    return next
+}
